@@ -149,6 +149,16 @@ export default function AdminChallengesPage() {
                     /tracker/{newToken}
                   </a>
                 </p>
+                <p className="text-green-600 text-xs mt-1">
+                  Onboarding link (send to participant first):{' '}
+                  <a
+                    href={`/tracker/${newToken}/onboarding`}
+                    target="_blank"
+                    className="underline"
+                  >
+                    /tracker/{newToken}/onboarding
+                  </a>
+                </p>
               </div>
             )}
 
@@ -282,6 +292,20 @@ export default function AdminChallengesPage() {
                       className="text-purple-600 hover:text-purple-700 text-xs font-medium block mb-1"
                     >
                       View Tracker →
+                    </a>
+                    <a
+                      href={`/tracker/${c.token}/onboarding`}
+                      target="_blank"
+                      className="text-stone-500 hover:text-stone-700 text-xs font-medium block mb-1"
+                    >
+                      Onboarding →
+                    </a>
+                    <a
+                      href={`/tracker/${c.token}/identity-checkin`}
+                      target="_blank"
+                      className="text-stone-500 hover:text-stone-700 text-xs font-medium block mb-1"
+                    >
+                      Identity check-in →
                     </a>
                     <p className="text-xs text-gray-300 font-mono">{c.token}</p>
                   </div>

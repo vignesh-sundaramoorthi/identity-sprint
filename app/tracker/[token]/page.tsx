@@ -260,12 +260,20 @@ export default function TrackerPage() {
               {challenge.user_name ? `${challenge.user_name.split(' ')[0]}'s Sprint` : 'Identity Sprint'}
             </h1>
           </div>
-          <button
-            onClick={() => router.push(`/tracker/${token}/progress`)}
-            className="text-purple-600 hover:text-purple-700 text-sm font-medium"
-          >
-            Progress →
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push(`/tracker/${token}/identity-checkin`)}
+              className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+            >
+              🪞 Check in
+            </button>
+            <button
+              onClick={() => router.push(`/tracker/${token}/progress`)}
+              className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+            >
+              Progress →
+            </button>
+          </div>
         </div>
 
         {/* Progress Bar */}
