@@ -1,28 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'applications.json')
+// Use Vercel KV if available, otherwise fall back to in-memory (dev)
+let kv: {
+  lpush: (key: string, ...values: string[]) => Promise<number>
+  lrange: (key: string, start: number, end: number) => Promise<string[]>
+} | null = null
 
-async function readApplications() {
+async function getKV() {
+  if (kv) return kv
   try {
-    const data = await fs.readFile(DATA_FILE, 'utf-8')
-    return JSON.parse(data)
+    const { kv: vercelKV } = await import('@vercel/kv')
+    kv = vercelKV
+    return kv
   } catch {
-    return []
+    return null
   }
 }
 
-async function writeApplications(applications: unknown[]) {
-  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true })
-  await fs.writeFile(DATA_FILE, JSON.stringify(applications, null, 2))
-}
+// In-memory fallback for local dev
+const inMemoryApplications: string[] = []
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const applications = await readApplications()
-
     const newApplication = {
       id: Date.now(),
       submittedAt: new Date().toISOString(),
@@ -30,8 +30,12 @@ export async function POST(request: NextRequest) {
       ...body,
     }
 
-    applications.push(newApplication)
-    await writeApplications(applications)
+    const store = await getKV()
+    if (store) {
+      await store.lpush('applications', JSON.stringify(newApplication))
+    } else {
+      inMemoryApplications.unshift(JSON.stringify(newApplication))
+    }
 
     return NextResponse.json({ success: true, id: newApplication.id })
   } catch (error) {
@@ -42,9 +46,22 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const applications = await readApplications()
+    const store = await getKV()
+    let rawItems: string[] = []
+
+    if (store) {
+      rawItems = await store.lrange('applications', 0, -1)
+    } else {
+      rawItems = inMemoryApplications
+    }
+
+    const applications = rawItems.map((item) => {
+      try { return JSON.parse(item) } catch { return null }
+    }).filter(Boolean)
+
     return NextResponse.json(applications)
-  } catch {
+  } catch (error) {
+    console.error('Error reading applications:', error)
     return NextResponse.json([])
   }
 }
