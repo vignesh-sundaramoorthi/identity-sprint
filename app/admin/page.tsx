@@ -1,26 +1,13 @@
-// Admin dashboard — fetches from API route (works with Vercel KV)
-// Visit /admin to see all applications
+import { supabaseAdmin } from '@/lib/supabase'
 
-async function getApplications() {
-  try {
-    // In production this hits the API route which reads from Vercel KV
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/applications`, { cache: 'no-store' })
-    if (!res.ok) return []
-    return res.json()
-  } catch {
-    return []
-  }
-}
+export const dynamic = 'force-dynamic'
 
 type Application = {
   id: number
   name: string
   email: string
   whatsapp?: string
-  submittedAt: string
+  submitted_at: string
   status: string
   identity_goal: string
   tried_before: string
@@ -28,8 +15,21 @@ type Application = {
   commitment: string
 }
 
+async function getApplications(): Promise<Application[]> {
+  const { data, error } = await supabaseAdmin
+    .from('applications')
+    .select('*')
+    .order('submitted_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching applications:', error)
+    return []
+  }
+  return data || []
+}
+
 export default async function Admin() {
-  const applications: Application[] = await getApplications()
+  const applications = await getApplications()
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
@@ -71,7 +71,7 @@ export default async function Admin() {
                       {app.status}
                     </span>
                     <p className="text-gray-400 text-xs mt-1">
-                      {new Date(app.submittedAt).toLocaleDateString('en-IN', {
+                      {new Date(app.submitted_at).toLocaleDateString('en-IN', {
                         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
                       })}
                     </p>
