@@ -3,6 +3,6 @@
   "/admin/page": "app/admin/page.js",
   "/api/applications/route": "app/api/applications/route.js",
   "/apply/page": "app/apply/page.js",
-  "/thank-you/page": "app/thank-you/page.js",
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/thank-you/page": "app/thank-you/page.js"
 }

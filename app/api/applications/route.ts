@@ -1,43 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// Use Vercel KV if available, otherwise fall back to in-memory (dev)
-let kv: {
-  lpush: (key: string, ...values: string[]) => Promise<number>
-  lrange: (key: string, start: number, end: number) => Promise<string[]>
-} | null = null
-
-async function getKV() {
-  if (kv) return kv
-  try {
-    const { kv: vercelKV } = await import('@vercel/kv')
-    kv = vercelKV
-    return kv
-  } catch {
-    return null
-  }
-}
-
-// In-memory fallback for local dev
-const inMemoryApplications: string[] = []
+import { supabase, supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const newApplication = {
-      id: Date.now(),
-      submittedAt: new Date().toISOString(),
-      status: 'new',
-      ...body,
+
+    const { data, error } = await supabase
+      .from('applications')
+      .insert([{
+        name: body.name,
+        email: body.email,
+        whatsapp: body.whatsapp || null,
+        identity_goal: body.identity_goal,
+        tried_before: body.tried_before,
+        why_now: body.why_now,
+        commitment: body.commitment,
+        status: 'new',
+      }])
+      .select()
+
+    if (error) {
+      console.error('Supabase insert error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    const store = await getKV()
-    if (store) {
-      await store.lpush('applications', JSON.stringify(newApplication))
-    } else {
-      inMemoryApplications.unshift(JSON.stringify(newApplication))
-    }
-
-    return NextResponse.json({ success: true, id: newApplication.id })
+    return NextResponse.json({ success: true, id: data?.[0]?.id })
   } catch (error) {
     console.error('Error saving application:', error)
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 })
@@ -46,20 +33,17 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const store = await getKV()
-    let rawItems: string[] = []
+    const { data, error } = await supabaseAdmin
+      .from('applications')
+      .select('*')
+      .order('submitted_at', { ascending: false })
 
-    if (store) {
-      rawItems = await store.lrange('applications', 0, -1)
-    } else {
-      rawItems = inMemoryApplications
+    if (error) {
+      console.error('Supabase read error:', error)
+      return NextResponse.json([])
     }
 
-    const applications = rawItems.map((item) => {
-      try { return JSON.parse(item) } catch { return null }
-    }).filter(Boolean)
-
-    return NextResponse.json(applications)
+    return NextResponse.json(data || [])
   } catch (error) {
     console.error('Error reading applications:', error)
     return NextResponse.json([])
