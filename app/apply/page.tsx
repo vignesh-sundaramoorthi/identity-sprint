@@ -101,7 +101,7 @@ export default function Apply() {
       }),
     }).catch(() => {})
     setLoading(false)
-    setStep('results')
+    setStep('done')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
