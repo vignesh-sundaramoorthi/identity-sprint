@@ -66,7 +66,15 @@ export default async function Admin() {
               {applications.length} total · {applications.filter(a => a.status === 'new').length} new · {discoveries.length} with blueprint
             </p>
           </div>
-          <div className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Identity Sprint Admin</div>
+          <div className="flex items-center gap-3">
+            <a href="/admin/challenges" className="border border-purple-200 text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+              🏃 Challenges
+            </a>
+            <a href="/admin/habits" className="border border-purple-200 text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+              📚 Habits
+            </a>
+            <div className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Identity Sprint Admin</div>
+          </div>
         </div>
 
         {applications.length === 0 ? (
