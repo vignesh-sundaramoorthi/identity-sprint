@@ -318,6 +318,11 @@ export default function Apply() {
                 </label>
               ))}
             </div>
+            {form.commitment === 'Not sure' && (
+              <p className="text-sm text-gray-500 mt-2 italic">
+                If you&apos;re not sure, that&apos;s okay to be honest about. The discovery call is a good place to figure it out together.
+              </p>
+            )}
           </div>
           <div className="pt-2">
             <button type="submit" disabled={loading}

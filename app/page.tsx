@@ -127,6 +127,12 @@ export default function Home() {
           <p className="text-gray-500 text-lg">30 days. A clear start. A clear end. Actual transformation.</p>
         </div>
 
+        {/* Step 1: Apply preamble */}
+        <div className="text-center mb-10">
+          <p className="text-sm font-bold text-gray-900 tracking-wide uppercase">Step 1: Apply.</p>
+          <p className="text-sm text-gray-400 mt-1">Every sprint starts with a 2-minute application. Vignesh reads every one.</p>
+        </div>
+
         {/* Timeline — desktop: horizontal row; mobile: vertical */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
@@ -294,6 +300,19 @@ export default function Home() {
           Apply now — takes 2 minutes →
         </Link>
         <p className="text-center text-sm text-gray-400 mt-4">Next cohort filling now. Vignesh reviews every application personally.</p>
+
+        {/* Trust block — Intake Filter framing */}
+        <div className="mt-12 max-w-xl mx-auto text-center">
+          <p className="text-gray-700 text-lg leading-relaxed">
+            This isn&apos;t a program you sign up for.
+          </p>
+          <p className="text-gray-700 text-lg leading-relaxed mt-2">
+            It&apos;s an application you submit — and Vignesh decides if the fit is right.
+          </p>
+          <p className="text-gray-500 text-base leading-relaxed mt-4">
+            That&apos;s not a gate to keep you out. It&apos;s a signal that what happens inside the sprint is built around the person who gets in. Someone in the wrong stage doesn&apos;t benefit from it — and you&apos;d know that within a week. The intake filter is how we prevent that.
+          </p>
+        </div>
       </section>
 
       {/* FAQ */}
@@ -302,6 +321,10 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-gray-900 mb-10">Questions</h2>
           <div className="space-y-8">
             {[
+              {
+                q: 'Will I be accepted if I apply?',
+                a: "Not always — and that's intentional. Vignesh personally reviews every application. If the timing and fit aren't right, he'll say so. Not because you're not capable of change, but because this sprint is designed for a specific stage of readiness — and accepting someone who isn't there yet would be doing them a disservice. If you apply and you're not the right fit right now, you'll hear honest feedback, not silence.",
+              },
               {
                 q: 'How is this different from a life coach?',
                 a: "A traditional life coach gives you advice. Identity Sprint gives you a process — grounded in behavioral science — and then works through it with you. The difference is the mechanism: we're not talking about what you should do. We're redesigning who you are at the level of identity.",
