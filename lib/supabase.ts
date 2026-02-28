@@ -8,4 +8,9 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Admin client (for reading all applications in admin)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  global: {
+    fetch: (url, options = {}) =>
+      fetch(url, { ...options, cache: 'no-store' }),
+  },
+})

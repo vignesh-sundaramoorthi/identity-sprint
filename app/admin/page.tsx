@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 const CRAVING_LABELS: Record<string, string> = {
   stability: '🏛️ Stability & Structure',
@@ -35,10 +36,12 @@ type Discovery = {
 }
 
 async function getData() {
-  const [{ data: apps }, { data: discoveries }] = await Promise.all([
+  const [{ data: apps, error: appsError }, { data: discoveries, error: discError }] = await Promise.all([
     supabaseAdmin.from('applications').select('*').order('submitted_at', { ascending: false }),
     supabaseAdmin.from('discovery').select('*').order('submitted_at', { ascending: false }),
   ])
+  if (appsError) console.error('Applications fetch error:', appsError)
+  if (discError) console.error('Discovery fetch error:', discError)
   return {
     applications: (apps || []) as Application[],
     discoveries: (discoveries || []) as Discovery[],
