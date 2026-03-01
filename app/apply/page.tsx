@@ -206,6 +206,16 @@ export default function Apply() {
               <li>3. We build your first 30-day identity sprint together</li>
             </ol>
           </div>
+
+          {/* Confirmation page callout — commitment half-life extension (Craft, pre-Cohort 1) */}
+          <div className="border border-gray-200 rounded-2xl p-6 text-left mb-8 bg-gray-50">
+            <p className="font-semibold text-gray-800 mb-3">One thing that will make your discovery call more useful:</p>
+            <p className="text-gray-600 text-sm leading-relaxed mb-2">
+              Write down the habit or change you&apos;ve tried the most times — and never made stick. Be specific.
+            </p>
+            <p className="text-gray-500 text-sm">You don&apos;t need to send it to us. It&apos;s for you. We&apos;ll start there.</p>
+          </div>
+
           <Link href="/" className="text-purple-600 font-semibold hover:underline">← Back to home</Link>
         </div>
       </main>
