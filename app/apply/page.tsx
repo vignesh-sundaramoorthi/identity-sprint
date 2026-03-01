@@ -21,7 +21,7 @@ const QUIZ_QUESTIONS = [
     options: ['Feeling bored or uninspired', 'Feeling not good enough yet', 'Feeling alone in the journey', 'Feeling undervalued / unnoticed', 'Life feels messy or out of control'],
   },
   {
-    key: 'q3', question: 'What pushes you to take action?',
+    key: 'q3', question: 'What keeps you going when things get hard?',
     options: ['Being recognised for results', 'Clear steps and structure', 'Trying something new', 'Doing it with someone', 'Getting better at a skill'],
   },
   {
@@ -30,7 +30,7 @@ const QUIZ_QUESTIONS = [
   },
   {
     key: 'q5', question: 'What would make this journey feel truly successful for you?',
-    options: ['Feeling stable and consistent', 'Feeling proud of a skill I built', 'Feeling supported throughout', 'Feeling excited and alive again', 'Feeling recognised for my growth'],
+    options: ['Feeling stable and consistent', 'Feeling proud of a skill I built', 'Feeling supported throughout', 'Feeling excited and alive again', 'Feeling recognised for my growth', 'Actually following through — consistently doing what I say I will'],
   },
   {
     key: 'q6', question: 'Why weren\'t previous attempts at change successful?',
