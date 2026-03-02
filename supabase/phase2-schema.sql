@@ -91,6 +91,17 @@ ALTER TABLE applications
 ALTER TABLE applications
   ADD COLUMN IF NOT EXISTS week_3_badge TEXT;
 
+-- DM Identity Verbatim: stores raw DM text from LinkedIn DMs before discovery call
+-- Captures language (not just signal type) for coaching intake triage:
+--   - Self-schema elaboration (thin vs thick — Markus 1977)
+--   - Possible-self proximity (proximal vs distal — Markus & Nurius 1986)
+--   - Change-talk type detection (desire/ability/reason/need — Miller & Rollnick 2013)
+-- Optional field. Admin text input, below pre_sprint_signal dropdown.
+-- Placeholder copy (Craft H47): "Paste their DM answer here (optional)."
+-- @Flux RICE 16.2 — LOCKED IN Phase 2 scope (H47)
+ALTER TABLE applications
+  ADD COLUMN IF NOT EXISTS dm_identity_verbatim TEXT;
+
 
 -- ============================================================
 -- SECTION 3: Field 9 additions to checkins (if table already existed)
@@ -177,6 +188,7 @@ ALTER TABLE checkins
 
 -- ============================================================
 -- SECTION 6: Indexes for admin performance
+-- (dm_identity_verbatim is free-text — no index needed)
 -- ============================================================
 CREATE INDEX IF NOT EXISTS idx_applications_stage_signal
   ON applications(stage_signal);
@@ -192,9 +204,15 @@ CREATE INDEX IF NOT EXISTS idx_checkins_field_9
 
 
 -- ============================================================
--- SECTION 6: Verification queries
+-- SECTION 7: Verification queries
 -- Run these after migration to confirm all columns exist
 -- ============================================================
+
+-- Expected applications columns after migration:
+--   identity_declaration, outcome_type, stage_signal, pre_sprint_signal,
+--   week_3_badge, dm_identity_verbatim
+-- Expected checkins columns after migration:
+--   field_9_recognition, field_9_verbatim, wall_triggered_at, wall_responded_at
 
 -- SELECT column_name, data_type, is_nullable
 -- FROM information_schema.columns
