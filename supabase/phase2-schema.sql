@@ -147,7 +147,36 @@ END $$;
 
 
 -- ============================================================
--- SECTION 5: Indexes for admin performance
+-- SECTION 5: Week 3 Wall Alert columns on checkins
+-- Two-column approach for elapsed-time admin banner (Item 13, Phase 2 PR)
+-- @Sage H43 calibration | @Craft H43 banner copy
+-- ============================================================
+
+-- wall_triggered_at: SET ONCE on check-in POST when wall condition first becomes true.
+--   Condition: week_number = 3 AND identity_rating <= 3 AND max(week1_rating, week2_rating) >= 4
+--   Idempotent — only written if currently NULL (preserves original submission timestamp).
+--   Used by admin banner to calculate ELAPSED TIME since participant hit the wall.
+--   Why not admin-page-load time: participant may submit at 9am, Vignesh opens at 7pm.
+--   Science: Pennebaker (1999) disclosure window, Gross & John (2003) regulation timing.
+ALTER TABLE checkins
+  ADD COLUMN IF NOT EXISTS wall_triggered_at TIMESTAMPTZ;
+
+-- wall_responded_at: SET when Vignesh clicks "Responded" button in admin banner.
+--   NULL = banner active. NOT NULL = banner dismissed.
+--   Set via PATCH /api/sprint/[id]/checkin/wall-respond (service role).
+ALTER TABLE checkins
+  ADD COLUMN IF NOT EXISTS wall_responded_at TIMESTAMPTZ;
+
+-- Admin banner states (copy from @Craft H43, verbatim):
+--   State 1 (wall_triggered_at < 4h ago, wall_responded_at IS NULL):
+--     amber bg — "⚠️ [Name] hit the Week 3 wall — respond within 4 hours."
+--   State 2 (wall_triggered_at >= 4h ago, wall_responded_at IS NULL):
+--     red bg — "⚠️ [Name] hit the wall [X]h ago — they still need a response."
+--   Dismissed (wall_responded_at IS NOT NULL): banner hidden.
+
+
+-- ============================================================
+-- SECTION 6: Indexes for admin performance
 -- ============================================================
 CREATE INDEX IF NOT EXISTS idx_applications_stage_signal
   ON applications(stage_signal);
