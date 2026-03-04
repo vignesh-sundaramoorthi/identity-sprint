@@ -110,11 +110,12 @@ export async function PATCH(req: NextRequest) {
   if ('stage_signal' in fields) applicationFields.stage_signal = fields.stage_signal
   if ('outcome_type' in fields) applicationFields.outcome_type = fields.outcome_type
   if ('outreach_door' in fields) applicationFields.outreach_door = fields.outreach_door
-  if ('relational_anchor_type' in fields) applicationFields.relational_anchor_type = fields.relational_anchor_type
-  if ('post_sprint_first_checkin_status' in fields) applicationFields.post_sprint_first_checkin_status = fields.post_sprint_first_checkin_status
-  if ('post_sprint_language_signal' in fields) applicationFields.post_sprint_language_signal = fields.post_sprint_language_signal
+  // BUG-017: coerce empty string → null for CHECK-constrained fields (Postgres rejects "" but accepts NULL)
+  if ('relational_anchor_type' in fields) applicationFields.relational_anchor_type = fields.relational_anchor_type || null
+  if ('post_sprint_first_checkin_status' in fields) applicationFields.post_sprint_first_checkin_status = fields.post_sprint_first_checkin_status || null
+  if ('post_sprint_language_signal' in fields) applicationFields.post_sprint_language_signal = fields.post_sprint_language_signal || null
   if ('sprint_completion_statement' in fields) applicationFields.sprint_completion_statement = fields.sprint_completion_statement
-  if ('sprint_completion_statement_type' in fields) applicationFields.sprint_completion_statement_type = fields.sprint_completion_statement_type
+  if ('sprint_completion_statement_type' in fields) applicationFields.sprint_completion_statement_type = fields.sprint_completion_statement_type || null
   if ('moment_flag' in fields) applicationFields.moment_flag = fields.moment_flag
   if ('moment_text' in fields) applicationFields.moment_text = fields.moment_text
 

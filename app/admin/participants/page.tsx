@@ -175,7 +175,7 @@ function WallBanner({ checkin, name, onRespond }: { checkin: Checkin; name: stri
 
 function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   participant: Participant; checkins: Checkin[]
-  onUpdate: (pid: number, aid: number, fields: Record<string, string>) => Promise<void>
+  onUpdate: (pid: number, aid: number, fields: Record<string, string | boolean | null>) => Promise<void>
   onWallRespond: (cid: number) => Promise<void>
 }) {
   const app = participant.applications
@@ -216,7 +216,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
       post_sprint_language_signal: postLangSignal,
       sprint_completion_statement: completionStatement,
       sprint_completion_statement_type: completionStatType,
-      moment_flag: String(momentFlag),
+      moment_flag: momentFlag,
       moment_text: momentText,
     })
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2500)
@@ -287,7 +287,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
           Outreach Door
-          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which outreach frame brought this participant in? Door A = identity change / exploration framing. Door B = mastery / depth framing. Platform refugees (BetterUp, Noom) → Door B by default.">ⓘ</span>
+          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which outreach frame brought this participant in? Door A = Rescue Frame (tried and failed, need a different approach). Door B = Optimization Frame (already disciplined, hitting a ceiling). Platform refugees (BetterUp, Noom) → Door B by default. Default: unknown.">ⓘ</span>
         </label>
         <select value={outreachDoor} onChange={(e) => setOutreachDoor(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
           <option value="unknown">Unknown</option>
@@ -454,7 +454,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
 
 function ParticipantCard({ participant, checkins, onUpdate, onWallRespond }: {
   participant: Participant; checkins: Checkin[]
-  onUpdate: (pid: number, aid: number, fields: Record<string, string>) => Promise<void>
+  onUpdate: (pid: number, aid: number, fields: Record<string, string | boolean | null>) => Promise<void>
   onWallRespond: (cid: number) => Promise<void>
 }) {
   const app = participant.applications
@@ -529,7 +529,7 @@ export default function ParticipantsPage() {
 
   useEffect(() => { load() }, [load])
 
-  const handleUpdate = useCallback(async (pid: number, aid: number, fields: Record<string, string>) => {
+  const handleUpdate = useCallback(async (pid: number, aid: number, fields: Record<string, string | boolean | null>) => {
     await fetch('/api/admin/participants', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
