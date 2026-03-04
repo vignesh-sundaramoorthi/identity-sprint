@@ -6,8 +6,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { generateToken, getDayNumber } from '@/lib/tracker'
 import { DailyCheckin } from '@/lib/types'
+import { requireAdminAuth } from '@/lib/adminAuth'
 
 export async function POST(req: NextRequest) {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+
   const body = await req.json()
 
   const {
@@ -65,6 +69,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+
   // Fetch all challenges with habit info
   const { data: challenges, error } = await supabaseAdmin
     .from('challenges')

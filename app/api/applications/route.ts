@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { requireAdminAuth } from '@/lib/adminAuth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,6 +33,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+
   try {
     const { data, error } = await supabaseAdmin
       .from('applications')

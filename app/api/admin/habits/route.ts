@@ -6,8 +6,12 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAdminAuth } from '@/lib/adminAuth'
 
 export async function GET() {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+
   const { data: domains } = await supabaseAdmin
     .from('habit_domains')
     .select('*')
@@ -27,6 +31,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+
   const body = await req.json()
   const { name, description, difficulty, domain_id, simpler_version } = body
 
@@ -48,6 +55,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+
   const body = await req.json()
   const { id, ...updates } = body
 
@@ -70,6 +80,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')
 
