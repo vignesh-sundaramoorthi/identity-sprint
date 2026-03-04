@@ -1,0 +1,538 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+
+// ─── Domain inference ─────────────────────────────────────────────────────────
+
+const DOMAIN_KEYWORDS: Record<string, string[]> = {
+  health:        ['sleep', 'health', 'fitness', 'gym', 'exercise', 'diet', 'nutrition', 'weight', 'body', 'run', 'workout', 'energy', 'wake', 'morning'],
+  career:        ['career', 'work', 'job', 'professional', 'productivity', 'business', 'focus', 'meeting', 'salary', 'promotion'],
+  creativity:    ['creat', 'write', 'writing', 'art', 'design', 'music', 'draw', 'build', 'make', 'story', 'publish', 'content', 'code'],
+  relationships: ['relationship', 'family', 'partner', 'friend', 'connect', 'people', 'present', 'marriage', 'social', 'listen'],
+  learning:      ['learn', 'study', 'read', 'book', 'knowledge', 'skill', 'course', 'language', 'understand', 'master', 'upskill'],
+  wellbeing:     ['mental', 'wellbeing', 'anxiety', 'stress', 'calm', 'mindful', 'meditat', 'reflect', 'journal', 'peace', 'therapy', 'mood'],
+  financial:     ['money', 'financ', 'sav', 'invest', 'debt', 'budget', 'wealth', 'spend', 'income', 'retire'],
+}
+
+function inferDomain(text: string): string {
+  const lower = text.toLowerCase()
+  let best = { domain: 'health', score: 0 }
+  for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
+    const score = keywords.filter((k) => lower.includes(k)).length
+    if (score > best.score) best = { domain, score }
+  }
+  return best.domain
+}
+
+const DOMAIN_META: Record<string, { emoji: string; label: string }> = {
+  health:        { emoji: '🏃', label: 'Health' },
+  career:        { emoji: '💼', label: 'Career' },
+  creativity:    { emoji: '🎨', label: 'Creativity' },
+  relationships: { emoji: '🤝', label: 'Relationships' },
+  learning:      { emoji: '📚', label: 'Learning' },
+  wellbeing:     { emoji: '🧠', label: 'Wellbeing' },
+  financial:     { emoji: '💰', label: 'Financial' },
+}
+
+const DOMAIN_CARDS: Record<string, {
+  habit: string; whyItWorks: string; weekOneMin: string
+  watchFor: string; identityAnchor: string; warning?: string
+}> = {
+  health: {
+    habit: 'Consistent wake time',
+    whyItWorks: '"Your wake time is the anchor for every other system — sleep quality, energy, appetite, recovery. Nothing else stacks reliably on top of bad sleep."',
+    weekOneMin: "Within 30 min, 7 days. That's it. No bedtime yet.",
+    watchFor: 'Health goals are clusters. If they name sleep + nutrition + exercise simultaneously: "Let\'s sequence these. Sleep is first."',
+    identityAnchor: '"What kind of body are you becoming? → Then: \'Someone who [X] starts here.\'"',
+  },
+  career: {
+    habit: '90-min deep work block',
+    whyItWorks: '"The work that actually moves your career only happens when the urgent work is not competing with it. This block is how you protect your thinking."',
+    weekOneMin: 'Same time daily. One block. Block is held even if the task is not perfect.',
+    watchFor: '"I do not have 90 minutes." → "What is the shortest block you could protect every day without exception?" (60 min is fine.)',
+    identityAnchor: '"What kind of professional are you becoming? Not what do you want to do — who are you becoming?" → Name the habit after they answer.',
+  },
+  creativity: {
+    habit: '15 min creating before consuming',
+    whyItWorks: '"Consuming first makes creating feel optional. Creating first makes consuming feel earned. A sequencing habit, not an inspiration habit."',
+    weekOneMin: '15 minutes. First thing. Anything counts — does not have to be good.',
+    watchFor: 'If they have a strong morning routine already: check whether creating or consuming comes first. Often email/news comes first. This is the reframe.',
+    identityAnchor: '"What does someone who makes things for a living do first in the morning?"',
+  },
+  relationships: {
+    habit: '20 min device-free presence',
+    whyItWorks: '"People do not feel the hours you spend with them. They feel whether you were actually there. This is the simplest and most powerful relationship habit."',
+    weekOneMin: 'One person, 20 minutes, no devices. Conversation topic does not matter.',
+    watchFor: 'NO-cluster domain — one habit is enough. If they want to add more: "Let\'s get this one automatic first."',
+    identityAnchor: '"Who do you want to be the kind of person for?"',
+  },
+  learning: {
+    habit: '10 min daily spaced repetition',
+    whyItWorks: '"Spaced retrieval outperforms re-reading by 50-80% in retention. 10 minutes of active recall beats 60 minutes of re-reading."',
+    weekOneMin: '10 minutes, daily. Active recall only — not re-reading. Anki, flashcards, or closing the book and testing yourself.',
+    watchFor: 'If they say they are bad at retaining things: they are consuming without retrieving. This habit is the fix.',
+    identityAnchor: '"What would it feel like to actually know this — not just have read it?"',
+  },
+  wellbeing: {
+    habit: '3-line evening reflection',
+    whyItWorks: '"This is not journaling. It is pattern recognition. Three lines: what happened, what you felt, what you want to carry forward. Over 7 days, you will see what is actually running you."',
+    weekOneMin: '3 lines, each evening. Pen and paper preferred. No word count. Just the 3 prompts.',
+    watchFor: 'If they mention anxiety, depression, trauma, or medication: this habit is appropriate support, not treatment.',
+    warning: 'SPECIALIST FLAG: If they mention anxiety, depression, trauma, or medication: "This is for self-awareness. Not a substitute for professional support."',
+    identityAnchor: '"What would it look like to be someone who understood themselves better?"',
+  },
+  financial: {
+    habit: 'Automate one financial flow',
+    whyItWorks: '"The hardest financial decisions are the ones we make repeatedly. Automation turns a repeated hard decision into one decision, made once. After that, the behaviour happens regardless of mood."',
+    weekOneMin: 'One automation set up this week. Amount is irrelevant. The habit is the setup, not the number.',
+    watchFor: 'Do not prescribe amounts. "We are building the habit of acting, not the perfect financial plan."',
+    warning: 'IMPORTANT: Do not prescribe amounts or savings rates. Focus on the habit of automating, not the figure.',
+    identityAnchor: '"What would it feel like to be someone who handles money on autopilot, without it living in your head?"',
+  },
+}
+
+interface Application {
+  id: number; name: string; email: string; whatsapp?: string
+  submitted_at: string; status: string; identity_goal: string
+  tried_before: string; why_now: string; commitment: string
+  identity_declaration?: string; outcome_type?: string
+  stage_signal?: string; pre_sprint_signal?: string
+  week_3_badge?: string; dm_identity_verbatim?: string
+}
+
+interface Participant {
+  id: number; application_id: number; cohort_id?: number
+  enrolled_at: string; status: string; habit_recommendation?: string
+  applications: Application
+}
+
+interface Checkin {
+  id: number; application_id: number; week_number: number
+  identity_rating: number; reflection_text?: string
+  field_9_recognition?: string; field_9_verbatim?: string
+  wall_triggered_at?: string; wall_responded_at?: string
+  created_at: string
+}
+
+type SortField = 'name' | 'enrolled_at' | 'status' | 'latest_rating'
+type SortDir = 'asc' | 'desc'
+
+function Sparkline({ ratings }: { ratings: number[] }) {
+  if (ratings.length === 0) return <span className="text-gray-300 text-xs">no data</span>
+  if (ratings.length === 1) return <span className="text-gray-600 text-xs font-mono">{ratings[0]}/5</span>
+  const w = 80; const h = 28; const pad = 4
+  const plotW = w - 2 * pad; const plotH = h - 2 * pad
+  const pts = ratings.map((r, i) => {
+    const x = pad + (i / (ratings.length - 1)) * plotW
+    const y = h - pad - ((r - 1) / 4) * plotH
+    return `${x},${y}`
+  })
+  const last = ratings[ratings.length - 1]
+  const color = last >= 4 ? '#22c55e' : last === 3 ? '#f59e0b' : '#ef4444'
+  return (
+    <div className="flex items-center gap-2">
+      <svg width={w} height={h} className="overflow-visible">
+        <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+        {ratings.map((r, i) => {
+          const x = pad + (i / (ratings.length - 1)) * plotW
+          const y = h - pad - ((r - 1) / 4) * plotH
+          return <circle key={i} cx={x} cy={y} r="2.5" fill={color} />
+        })}
+      </svg>
+      <span className="text-xs font-mono text-gray-500">{ratings.join(' → ')}</span>
+    </div>
+  )
+}
+
+function WallBanner({ checkin, name, onRespond }: { checkin: Checkin; name: string; onRespond: (id: number) => Promise<void> }) {
+  const [busy, setBusy] = useState(false)
+  if (!checkin.wall_triggered_at || checkin.wall_responded_at) return null
+  const hoursElapsed = (Date.now() - new Date(checkin.wall_triggered_at).getTime()) / 3600000
+  const urgent = hoursElapsed >= 4
+  const handle = async () => { setBusy(true); await onRespond(checkin.id); setBusy(false) }
+  return (
+    <div className={`rounded-xl p-3 flex items-center justify-between gap-3 ${urgent ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'}`}>
+      <div>
+        <p className={`text-sm font-semibold ${urgent ? 'text-red-700' : 'text-amber-700'}`}>
+          ⚠️ {urgent ? `${name} hit the wall ${Math.round(hoursElapsed)}h ago — they still need a response.` : `${name} hit the Week 3 wall — respond within 4 hours.`}
+        </p>
+        <p className="text-xs text-gray-500 mt-0.5">Week {checkin.week_number} · Rating: {checkin.identity_rating}/5</p>
+      </div>
+      <button onClick={handle} disabled={busy} className={`flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg ${urgent ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-500 hover:bg-amber-600'} text-white disabled:opacity-60 transition-colors`}>
+        {busy ? 'Saving…' : 'Mark Responded'}
+      </button>
+    </div>
+  )
+}
+
+function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
+  participant: Participant; checkins: Checkin[]
+  onUpdate: (pid: number, aid: number, fields: Record<string, string>) => Promise<void>
+  onWallRespond: (cid: number) => Promise<void>
+}) {
+  const app = participant.applications
+  const inferred = inferDomain(app.identity_goal)
+  const [domain, setDomain] = useState(inferred)
+  const [showGuide, setShowGuide] = useState(false)
+  const [habitRec, setHabitRec] = useState(participant.habit_recommendation ?? '')
+  const [dmVerb, setDmVerb] = useState(app.dm_identity_verbatim ?? '')
+  const [preSig, setPreSig] = useState(app.pre_sprint_signal ?? '')
+  const [stageSig, setStageSig] = useState(app.stage_signal ?? '')
+  const [outcome, setOutcome] = useState(app.outcome_type ?? '')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const ratings = checkins.map((c) => c.identity_rating)
+  const walls = checkins.filter((c) => c.wall_triggered_at && !c.wall_responded_at)
+  const card = DOMAIN_CARDS[domain]
+  const meta = DOMAIN_META[domain]
+
+  const save = async () => {
+    setSaving(true)
+    await onUpdate(participant.id, app.id, { habit_recommendation: habitRec, dm_identity_verbatim: dmVerb, pre_sprint_signal: preSig, stage_signal: stageSig, outcome_type: outcome })
+    setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2500)
+  }
+
+  return (
+    <div className="border-t border-gray-100 bg-slate-50/60 p-5 space-y-4">
+      {walls.map((c) => <WallBanner key={c.id} checkin={c} name={app.name} onRespond={onWallRespond} />)}
+
+      {checkins.length > 0 && (
+        <div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Identity Rating Trend</p>
+          <Sparkline ratings={ratings} />
+          <div className="mt-2 space-y-1.5">
+            {checkins.map((c) => (
+              <div key={c.id} className="flex items-start gap-3 text-xs">
+                <span className="text-gray-400 w-14 flex-shrink-0">Wk {c.week_number}</span>
+                <span className={`font-bold w-6 flex-shrink-0 ${c.identity_rating >= 4 ? 'text-green-600' : c.identity_rating === 3 ? 'text-amber-600' : 'text-red-600'}`}>{c.identity_rating}/5</span>
+                <div className="flex-1 min-w-0">
+                  {c.reflection_text && <p className="text-gray-500 italic">&ldquo;{c.reflection_text.slice(0, 130)}{c.reflection_text.length > 130 ? '…' : ''}&rdquo;</p>}
+                  <div className="flex gap-1.5 mt-0.5 flex-wrap">
+                    {c.field_9_recognition && (
+                      <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${c.field_9_recognition === 'H1' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {c.field_9_recognition === 'H1' ? '💡 H1' : '🔄 H2'}
+                      </span>
+                    )}
+                    {c.wall_triggered_at && <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-xs font-medium">🧱 Wall{c.wall_responded_at ? ' (ok)' : ' (pending)'}</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {checkins.length === 0 && <p className="text-xs text-gray-400 italic">No check-ins yet.</p>}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Pre-Sprint Signal</label>
+          <select value={preSig} onChange={(e) => setPreSig(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+            <option value="">Not set</option>
+            <option value="H1">H1 — That is exactly it</option>
+            <option value="H2">H2 — Had not thought of it</option>
+            <option value="none">None observed</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Stage Signal</label>
+          <select value={stageSig} onChange={(e) => setStageSig(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+            <option value="">Not set</option>
+            <option value="action">🟢 Action</option>
+            <option value="discovery">🟡 Discovery</option>
+            <option value="assess">🔵 Assess</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Outcome Type</label>
+          <select value={outcome} onChange={(e) => setOutcome(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+            <option value="">Not set</option>
+            <option value="A">A — Strong transformation</option>
+            <option value="B">B — Moderate</option>
+            <option value="C">C — Minimal / withdrawn</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">DM Identity Verbatim</label>
+        <textarea value={dmVerb} onChange={(e) => setDmVerb(e.target.value)} rows={2} placeholder="Paste their DM answer here (optional)." className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400 resize-none" />
+      </div>
+
+      <div>
+        <button onClick={() => setShowGuide(!showGuide)} className="flex items-center gap-2 text-sm font-bold text-indigo-700 hover:text-indigo-900 transition-colors">
+          <span>📞 Discovery Call Guide</span>
+          <span className="text-gray-400 text-xs">{showGuide ? '▲' : '▼'}</span>
+        </button>
+
+        {showGuide && (
+          <div className="mt-3 bg-white rounded-2xl border border-indigo-100 p-4 space-y-3">
+            <p className="text-xs text-gray-400 italic">You have already read their application. This helps you scope the one habit to start with.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Identity Goal</p>
+                <p className="text-xs text-gray-700">{app.identity_goal}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">What They Have Tried</p>
+                <p className="text-xs text-gray-700">{app.tried_before}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Why Now</p>
+                <p className="text-xs text-gray-700">{app.why_now}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Domain — inferred: {meta.emoji} {meta.label}</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(DOMAIN_META).map(([k, { emoji, label }]) => (
+                  <button key={k} onClick={() => setDomain(k)} className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${domain === k ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    {emoji} {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-indigo-600 text-white rounded-xl px-4 py-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-indigo-200 mb-0.5">Gateway Habit</p>
+              <p className="text-base font-black">{meta.emoji} {card.habit}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl px-4 py-3">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Why It Works (say this)</p>
+              <p className="text-xs text-gray-700 italic leading-relaxed">{card.whyItWorks}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl px-4 py-3">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Week 1 Minimum</p>
+              <p className="text-xs text-gray-700">{card.weekOneMin}</p>
+            </div>
+            <div className="bg-amber-50 rounded-xl px-4 py-3">
+              <p className="text-xs font-bold text-amber-600 uppercase tracking-wide mb-1">Watch For</p>
+              <p className="text-xs text-amber-800">{card.watchFor}</p>
+            </div>
+            {card.warning && (
+              <div className="bg-red-50 rounded-xl px-4 py-3">
+                <p className="text-xs text-red-700">{card.warning}</p>
+              </div>
+            )}
+            <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3">
+              <p className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-1">Identity Anchor — say this first</p>
+              <p className="text-sm font-semibold text-indigo-800 leading-relaxed">{card.identityAnchor}</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Prescribed Habit (assign after the call)</label>
+              <input type="text" value={habitRec} onChange={(e) => setHabitRec(e.target.value)} placeholder={`e.g. ${card.habit}`} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-400" />
+              <p className="text-xs text-gray-400 mt-1">Saves to sprint_participants.habit_recommendation</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {participant.habit_recommendation && (
+        <div className="bg-indigo-600 text-white rounded-xl px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-200 mb-0.5">Prescribed Habit</p>
+          <p className="text-base font-black">{participant.habit_recommendation}</p>
+          <p className="text-xs text-indigo-200 mt-0.5">{DOMAIN_META[inferred].emoji} {DOMAIN_META[inferred].label} (inferred domain)</p>
+        </div>
+      )}
+
+      <button onClick={save} disabled={saving} className="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors">
+        {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save Changes'}
+      </button>
+    </div>
+  )
+}
+
+function ParticipantCard({ participant, checkins, onUpdate, onWallRespond }: {
+  participant: Participant; checkins: Checkin[]
+  onUpdate: (pid: number, aid: number, fields: Record<string, string>) => Promise<void>
+  onWallRespond: (cid: number) => Promise<void>
+}) {
+  const app = participant.applications
+  const [expanded, setExpanded] = useState(false)
+  const ratings = checkins.map((c) => c.identity_rating)
+  const latestRating = ratings[ratings.length - 1]
+  const hasWall = checkins.some((c) => c.wall_triggered_at && !c.wall_responded_at)
+
+  const stageColors: Record<string, string> = {
+    action: 'bg-green-100 text-green-700',
+    discovery: 'bg-amber-100 text-amber-700',
+    assess: 'bg-blue-100 text-blue-700',
+  }
+
+  return (
+    <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${hasWall ? 'border-red-200' : 'border-gray-100'}`}>
+      <button onClick={() => setExpanded(!expanded)} className="w-full text-left p-5 hover:bg-gray-50/60 transition-colors">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <h3 className="text-base font-bold text-gray-900">{app.name}</h3>
+              {hasWall && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">⚠️ Needs attention</span>}
+              {participant.habit_recommendation && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">💊 Habit assigned</span>}
+            </div>
+            <p className="text-xs text-gray-500">{app.email}{app.whatsapp ? ` · ${app.whatsapp}` : ''}</p>
+            <p className="text-xs text-gray-600 mt-1 line-clamp-1 italic">{app.identity_goal}</p>
+          </div>
+          <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${participant.status === 'active' ? 'bg-green-50 text-green-700' : participant.status === 'completed' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+              {participant.status}
+            </span>
+            {app.stage_signal && (
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${stageColors[app.stage_signal] || 'bg-gray-100 text-gray-500'}`}>
+                {app.stage_signal === 'action' ? '🟢' : app.stage_signal === 'discovery' ? '🟡' : '🔵'} {app.stage_signal}
+              </span>
+            )}
+            {app.pre_sprint_signal && (
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full font-mono">{app.pre_sprint_signal}</span>
+            )}
+            {ratings.length > 0 && <Sparkline ratings={ratings} />}
+            <span className="text-xs text-gray-400">{expanded ? '▲' : '▼'}</span>
+          </div>
+        </div>
+      </button>
+
+      {expanded && (
+        <ParticipantDetail participant={participant} checkins={checkins} onUpdate={onUpdate} onWallRespond={onWallRespond} />
+      )}
+    </div>
+  )
+}
+
+export default function ParticipantsPage() {
+  const [participants, setParticipants] = useState<Participant[]>([])
+  const [checkinsByApp, setCheckinsByApp] = useState<Record<number, Checkin[]>>({})
+  const [loading, setLoading] = useState(true)
+  const [sortField, setSortField] = useState<SortField>('enrolled_at')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [wallOnly, setWallOnly] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    const res = await fetch('/api/admin/participants')
+    if (res.ok) {
+      const data = await res.json()
+      setParticipants(data.participants || [])
+      setCheckinsByApp(data.checkinsByApp || {})
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const handleUpdate = useCallback(async (pid: number, aid: number, fields: Record<string, string>) => {
+    await fetch('/api/admin/participants', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ participant_id: pid, application_id: aid, ...fields }),
+    })
+    await load()
+  }, [load])
+
+  const handleWallRespond = useCallback(async (cid: number) => {
+    await fetch('/api/admin/checkins', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ checkin_id: cid }),
+    })
+    await load()
+  }, [load])
+
+  const sorted = [...participants]
+    .filter((p) => filterStatus === 'all' || p.status === filterStatus)
+    .filter((p) => {
+      if (!wallOnly) return true
+      const c = checkinsByApp[p.application_id] || []
+      return c.some((ch) => ch.wall_triggered_at && !ch.wall_responded_at)
+    })
+    .sort((a, b) => {
+      let av: string | number = 0, bv: string | number = 0
+      if (sortField === 'name') { av = a.applications.name.toLowerCase(); bv = b.applications.name.toLowerCase() }
+      else if (sortField === 'enrolled_at') { av = a.enrolled_at; bv = b.enrolled_at }
+      else if (sortField === 'status') { av = a.status; bv = b.status }
+      else if (sortField === 'latest_rating') {
+        const ac = checkinsByApp[a.application_id] || []
+        const bc = checkinsByApp[b.application_id] || []
+        av = ac.length > 0 ? ac[ac.length - 1].identity_rating : 0
+        bv = bc.length > 0 ? bc[bc.length - 1].identity_rating : 0
+      }
+      if (av < bv) return sortDir === 'asc' ? -1 : 1
+      if (av > bv) return sortDir === 'asc' ? 1 : -1
+      return 0
+    })
+
+  const wallCount = participants.filter((p) => {
+    const c = checkinsByApp[p.application_id] || []
+    return c.some((ch) => ch.wall_triggered_at && !ch.wall_responded_at)
+  }).length
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+    else { setSortField(field); setSortDir('asc') }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">Sprint Participants</h1>
+            <p className="text-gray-500 text-sm mt-1">
+              {participants.length} enrolled
+              {wallCount > 0 && <span className="ml-2 text-red-600 font-semibold">&middot; {wallCount} wall alert{wallCount > 1 ? 's' : ''}</span>}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <a href="/admin" className="text-gray-500 hover:text-gray-700 text-sm py-2 px-4">&larr; Admin Home</a>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3 mb-5 items-center">
+          <div className="flex gap-2">
+            {['all', 'active', 'completed', 'withdrawn'].map((s) => (
+              <button key={s} onClick={() => setFilterStatus(s)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${filterStatus === s ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 border border-gray-200'}`}>
+                {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setWallOnly(!wallOnly)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${wallOnly ? 'bg-red-600 text-white' : 'bg-white text-gray-600 border border-gray-200'}`}>
+            Wall alerts{wallCount > 0 ? ` (${wallCount})` : ''}
+          </button>
+          <div className="ml-auto flex gap-2 items-center">
+            <span className="text-xs text-gray-400">Sort:</span>
+            {(['name', 'enrolled_at', 'status', 'latest_rating'] as SortField[]).map((f) => (
+              <button key={f} onClick={() => toggleSort(f)}
+                className={`px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === f ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-gray-500 border border-gray-200'}`}>
+                {f === 'enrolled_at' ? 'Enrolled' : f === 'latest_rating' ? 'Rating' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {sortField === f && <span className="ml-0.5">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-16 text-gray-400">Loading participants&hellip;</div>
+        ) : sorted.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <p className="text-4xl mb-4">👥</p>
+            <p>{participants.length === 0 ? 'No participants yet. Enroll applicants from the admin page.' : 'No participants match your filters.'}</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {sorted.map((p) => (
+              <ParticipantCard
+                key={p.id}
+                participant={p}
+                checkins={checkinsByApp[p.application_id] || []}
+                onUpdate={handleUpdate}
+                onWallRespond={handleWallRespond}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

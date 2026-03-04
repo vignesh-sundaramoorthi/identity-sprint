@@ -67,6 +67,9 @@ export default async function Admin() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <a href="/admin/participants" className="border border-indigo-200 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+              👥 Participants
+            </a>
             <a href="/admin/challenges" className="border border-purple-200 text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
               🏃 Challenges
             </a>
