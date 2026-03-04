@@ -188,9 +188,19 @@ export default function CheckinPage() {
         {/* Week badge */}
         <div className="flex justify-center mb-8">
           <span className="text-xs font-semibold text-stone-400 border border-stone-700 rounded-full px-4 py-1 uppercase tracking-widest">
-            Week {weekNumber} Check-in
+            {weekNumber === 1 ? 'Implementation Commitment · Week 1' : `Week ${weekNumber} Check-in`}
           </span>
         </div>
+
+        {/* Week 1 framing note — sets accurate expectations before the form */}
+        {weekNumber === 1 && (
+          <div className="bg-stone-900 border border-stone-700 rounded-xl px-5 py-4 mb-6">
+            <p className="text-stone-300 text-sm leading-relaxed">
+              Week 1 isn&apos;t about forming a habit — it&apos;s about proving to yourself that this is who you&apos;re becoming.{' '}
+              <span className="text-stone-400">That commitment is what habits are built on.</span>
+            </p>
+          </div>
+        )}
 
         {/* Identity goal reflection */}
         <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 mb-8">
