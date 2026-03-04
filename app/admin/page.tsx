@@ -131,6 +131,16 @@ export default async function Admin() {
                         <p className="text-xs text-gray-400 mt-2">Commitment: {app.commitment}</p>
                       </div>
                     </div>
+
+                    {/* Phase 3 PR1 — tried_before discovery call hint (Obj 3: "I've tried things before") */}
+                    {app.tried_before && app.tried_before.trim().length > 10 && (
+                      <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                        <p className="text-xs font-bold text-amber-700 uppercase tracking-widest mb-1">🎯 Discovery call hint — Objection 3</p>
+                        <p className="text-sm text-amber-900 leading-relaxed">
+                          This person has tried before. <span className="font-semibold">Don&apos;t defend the sprint — validate their frustration first.</span> Ask: &ldquo;What made you stop last time — was it motivation, life getting busy, or something else?&rdquo; Then reframe: past attempts failed at the system level, not the person level. Identity Sprint changes the substrate, not the habit.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Blueprint section */}
