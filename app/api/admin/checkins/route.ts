@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth } from '@/lib/adminAuth'
 
+// BUG-012 FIX: Auth must fire before method validation.
+// For methods not handled by this route, check auth first (return 401 if not
+// authenticated) then return 405. This prevents leaking endpoint existence
+// to unauthenticated callers via the 405 status code.
+function methodNotAllowed(): NextResponse {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
+}
+
+export async function GET()    { return methodNotAllowed() }
+export async function POST()   { return methodNotAllowed() }
+export async function PUT()    { return methodNotAllowed() }
+export async function DELETE() { return methodNotAllowed() }
+
 // PATCH /api/admin/checkins
 // Mark a wall alert as responded (sets wall_responded_at)
 export async function PATCH(req: NextRequest) {
