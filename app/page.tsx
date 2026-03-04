@@ -62,13 +62,18 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Pull quote */}
-        <div className="mt-10 border-l-4 border-gray-200 pl-6 py-2">
-          <p className="text-gray-600 italic text-lg">
-            "I've now reduced my coffee intake by 70% with Streaks — something I struggled with for 5 years."
-          </p>
-          <p className="text-sm text-gray-400 mt-2">— Real user review</p>
-          <p className="text-sm text-gray-500 mt-1">Five years of trying the behavior-first way. Identity Sprint starts somewhere different.</p>
+        {/* Why it works — mechanism trust statement (replaces testimonial until Cohort 1 data arrives) */}
+        <div className="mt-10 rounded-2xl bg-gray-50 px-8 py-8 border border-gray-100">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Why this works when everything else didn&apos;t</p>
+          <p className="text-gray-900 font-semibold text-lg mb-3">The difference isn&apos;t the habit. It&apos;s who you believe you are.</p>
+          <div className="space-y-3 text-gray-600 text-base leading-relaxed">
+            <p>
+              Most programs give you a checklist and expect willpower to do the rest. Identity Sprint starts from the opposite direction — understanding who you want to become, then designing habits that feel like expressions of that identity rather than requirements imposed on it.
+            </p>
+            <p>
+              That&apos;s why people who&apos;ve tried everything for years can make progress in a sprint. Not because we found a better system. Because we changed the question.
+            </p>
+          </div>
         </div>
       </section>
 

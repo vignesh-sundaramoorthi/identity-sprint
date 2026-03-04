@@ -98,6 +98,14 @@ interface Application {
   identity_declaration?: string; outcome_type?: string
   stage_signal?: string; pre_sprint_signal?: string
   week_3_badge?: string; dm_identity_verbatim?: string
+  outreach_door?: string
+  relational_anchor_type?: string
+  post_sprint_first_checkin_status?: string
+  post_sprint_language_signal?: string
+  sprint_completion_statement?: string
+  sprint_completion_statement_type?: string
+  moment_flag?: boolean
+  moment_text?: string
 }
 
 interface Participant {
@@ -179,6 +187,14 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   const [preSig, setPreSig] = useState(app.pre_sprint_signal ?? '')
   const [stageSig, setStageSig] = useState(app.stage_signal ?? '')
   const [outcome, setOutcome] = useState(app.outcome_type ?? '')
+  const [outreachDoor, setOutreachDoor] = useState(app.outreach_door ?? 'unknown')
+  const [relanchorType, setRelanchorType] = useState(app.relational_anchor_type ?? '')
+  const [postCheckinStatus, setPostCheckinStatus] = useState(app.post_sprint_first_checkin_status ?? '')
+  const [postLangSignal, setPostLangSignal] = useState(app.post_sprint_language_signal ?? '')
+  const [completionStatement, setCompletionStatement] = useState(app.sprint_completion_statement ?? '')
+  const [completionStatType, setCompletionStatType] = useState(app.sprint_completion_statement_type ?? '')
+  const [momentFlag, setMomentFlag] = useState(app.moment_flag ?? false)
+  const [momentText, setMomentText] = useState(app.moment_text ?? '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const ratings = checkins.map((c) => c.identity_rating)
@@ -188,7 +204,21 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
 
   const save = async () => {
     setSaving(true)
-    await onUpdate(participant.id, app.id, { habit_recommendation: habitRec, dm_identity_verbatim: dmVerb, pre_sprint_signal: preSig, stage_signal: stageSig, outcome_type: outcome })
+    await onUpdate(participant.id, app.id, {
+      habit_recommendation: habitRec,
+      dm_identity_verbatim: dmVerb,
+      pre_sprint_signal: preSig,
+      stage_signal: stageSig,
+      outcome_type: outcome,
+      outreach_door: outreachDoor,
+      relational_anchor_type: relanchorType,
+      post_sprint_first_checkin_status: postCheckinStatus,
+      post_sprint_language_signal: postLangSignal,
+      sprint_completion_statement: completionStatement,
+      sprint_completion_statement_type: completionStatType,
+      moment_flag: String(momentFlag),
+      moment_text: momentText,
+    })
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2500)
   }
 
@@ -253,9 +283,88 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
         </div>
       </div>
 
+      {/* Outreach Door — pre-sprint acquisition tracking */}
+      <div>
+        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+          Outreach Door
+          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which outreach frame brought this participant in? Door A = identity change / exploration framing. Door B = mastery / depth framing. Platform refugees (BetterUp, Noom) → Door B by default.">ⓘ</span>
+        </label>
+        <select value={outreachDoor} onChange={(e) => setOutreachDoor(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+          <option value="unknown">Unknown</option>
+          <option value="a">Door A — Rescue Frame</option>
+          <option value="b">Door B — Optimization Frame</option>
+        </select>
+        <p className="text-xs text-gray-400 mt-1">Set manually. Which outreach message did you send them?</p>
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+          Relational Anchor Type
+          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Did this participant name a relational witness before or after you asked? Spontaneous = named without prompting. Coached = named after 'Who in your life has noticed?' Probe. None = no relational anchor identified.">ⓘ</span>
+        </label>
+        <select value={relanchorType} onChange={(e) => setRelanchorType(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+          <option value="">Not set</option>
+          <option value="spontaneous">Spontaneous — named without prompting</option>
+          <option value="coached">Coached — named after probe</option>
+          <option value="none">None — no relational anchor</option>
+        </select>
+        <p className="text-xs text-gray-400 mt-1 italic">Did this participant name a relational witness before or after you asked?</p>
+      </div>
+
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">DM Identity Verbatim</label>
         <textarea value={dmVerb} onChange={(e) => setDmVerb(e.target.value)} rows={2} placeholder="Paste their DM answer here (optional)." className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400 resize-none" />
+      </div>
+
+      {/* Post-Sprint Fields */}
+      <div className="bg-slate-100 rounded-2xl p-4 space-y-3">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Post-Sprint</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">First Check-in (Post-Sprint)</label>
+            <select value={postCheckinStatus} onChange={(e) => setPostCheckinStatus(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+              <option value="">Not set</option>
+              <option value="on_time">✅ On time</option>
+              <option value="missed">❌ Missed</option>
+              <option value="pending">⏳ Pending</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Post-Sprint Language Signal</label>
+            <select value={postLangSignal} onChange={(e) => setPostLangSignal(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+              <option value="">Not set</option>
+              <option value="graduated">🎓 Graduated</option>
+              <option value="threshold">⚠️ Threshold</option>
+              <option value="unknown">❓ Unknown</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Sprint Completion Statement</label>
+          <textarea value={completionStatement} onChange={(e) => setCompletionStatement(e.target.value)} rows={2} placeholder="Their New Chapter identity statement at sprint close…" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400 resize-none" />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Statement Type</label>
+          <select value={completionStatType} onChange={(e) => setCompletionStatType(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+            <option value="">Not set</option>
+            <option value="categorical">Categorical</option>
+            <option value="process">Process</option>
+            <option value="relational">Relational</option>
+            <option value="null">Null</option>
+          </select>
+        </div>
+
+        <div className="flex items-start gap-3">
+          <input type="checkbox" id={`moment_flag_${participant.id}`} checked={momentFlag} onChange={(e) => setMomentFlag(e.target.checked)} className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+          <label htmlFor={`moment_flag_${participant.id}`} className="text-sm text-gray-700 font-medium">Recognition moment observed</label>
+        </div>
+        {momentFlag && (
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Moment Text</label>
+            <textarea value={momentText} onChange={(e) => setMomentText(e.target.value)} rows={2} placeholder="Verbatim quote or coach note describing the recognition moment…" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400 resize-none" />
+          </div>
+        )}
       </div>
 
       <div>
