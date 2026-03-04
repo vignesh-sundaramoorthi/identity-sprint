@@ -33,7 +33,15 @@ export async function GET(_req: NextRequest) {
         stage_signal,
         pre_sprint_signal,
         week_3_badge,
-        dm_identity_verbatim
+        dm_identity_verbatim,
+        outreach_door,
+        relational_anchor_type,
+        post_sprint_first_checkin_status,
+        post_sprint_language_signal,
+        sprint_completion_statement,
+        sprint_completion_statement_type,
+        moment_flag,
+        moment_text
       )
     `)
     .order('enrolled_at', { ascending: false })
@@ -101,6 +109,14 @@ export async function PATCH(req: NextRequest) {
   if ('pre_sprint_signal' in fields) applicationFields.pre_sprint_signal = fields.pre_sprint_signal
   if ('stage_signal' in fields) applicationFields.stage_signal = fields.stage_signal
   if ('outcome_type' in fields) applicationFields.outcome_type = fields.outcome_type
+  if ('outreach_door' in fields) applicationFields.outreach_door = fields.outreach_door
+  if ('relational_anchor_type' in fields) applicationFields.relational_anchor_type = fields.relational_anchor_type
+  if ('post_sprint_first_checkin_status' in fields) applicationFields.post_sprint_first_checkin_status = fields.post_sprint_first_checkin_status
+  if ('post_sprint_language_signal' in fields) applicationFields.post_sprint_language_signal = fields.post_sprint_language_signal
+  if ('sprint_completion_statement' in fields) applicationFields.sprint_completion_statement = fields.sprint_completion_statement
+  if ('sprint_completion_statement_type' in fields) applicationFields.sprint_completion_statement_type = fields.sprint_completion_statement_type
+  if ('moment_flag' in fields) applicationFields.moment_flag = fields.moment_flag
+  if ('moment_text' in fields) applicationFields.moment_text = fields.moment_text
 
   const errors: string[] = []
 
