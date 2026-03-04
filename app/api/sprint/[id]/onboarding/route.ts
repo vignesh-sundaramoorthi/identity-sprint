@@ -43,7 +43,8 @@ export async function POST(
     return NextResponse.json({ error: 'Declaration too short' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
+  // Use supabaseAdmin here — anon RLS policy blocks UPDATE on applications table
+  const { data, error } = await supabaseAdmin
     .from('applications')
     .update({ identity_declaration: identity_declaration.trim() })
     .eq('id', applicationId)
