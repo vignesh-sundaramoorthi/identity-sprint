@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAdminAuth } from '@/lib/adminAuth'
 
 // GET /api/admin/participants
 // Returns all sprint_participants joined with applications and checkins
 export async function GET(_req: NextRequest) {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+
   const { data: participants, error } = await supabaseAdmin
     .from('sprint_participants')
     .select(`
@@ -81,6 +85,9 @@ interface CheckinRow {
 // PATCH /api/admin/participants
 // Update habit_recommendation, dm_identity_verbatim, pre_sprint_signal, stage_signal, or outcome_type
 export async function PATCH(req: NextRequest) {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+
   const body = await req.json()
   const { participant_id, application_id, ...fields } = body
 

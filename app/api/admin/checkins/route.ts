@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAdminAuth } from '@/lib/adminAuth'
 
 // PATCH /api/admin/checkins
 // Mark a wall alert as responded (sets wall_responded_at)
 export async function PATCH(req: NextRequest) {
+  const authError = requireAdminAuth()
+  if (authError) return authError
+
   const body = await req.json()
   const { checkin_id } = body
 
