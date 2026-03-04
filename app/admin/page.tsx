@@ -12,6 +12,18 @@ const CRAVING_LABELS: Record<string, string> = {
   autonomy: '🎯 Autonomy & Control',
 }
 
+// Phase 3 PR1 amendment — Craving coaching tooltips (verbatim copy: Craft H93)
+// Zero DB changes: craving type is already in the discovery row.
+// These read as coaching reminders, not data labels.
+const CRAVING_COACHING: Record<string, string> = {
+  stability: "Disruption is this person's #1 churn risk. When life gets chaotic, even motivated sprinters with STABILITY patterns lose traction. Proactively script a 'life interruption' plan in Week 2 before they need it.",
+  novelty: "They may self-identify as 'shiny object syndrome' — pre-empt that narrative. Add visible variety hooks in Weeks 2–3. The goal: make the sprint itself feel like the new interesting thing each week.",
+  connection: "The coach relationship IS the product for this person, not a delivery channel. Named, personal check-ins matter more than any feature. If they go quiet, reach out — don't wait for them to.",
+  recognition: "Plan explicit milestone acknowledgment in Weeks 2–3. Silent progress = silent disengagement for RECOGNITION types. They're also your highest-share-potential segment if they feel seen.",
+  competence: "Frame daily reps as evidence of becoming, not boxes to check. Progress quality signals matter more than streaks for this type. If they're doing the habit sloppily just to complete it, that's a flag.",
+  autonomy: "Co-design frame on discovery call: 'Here's what the research says for your pattern — how would you apply it to your life?' not 'Here's your Week 1 habit.' They'll own it if they built it.",
+}
+
 const FAILURE_LABELS: Record<string, string> = {
   no_identity_anchor: '🪞 Missing identity anchor',
   willpower_reliance: '💪 Relying on willpower',
@@ -161,6 +173,17 @@ export default async function Admin() {
                           <p className="text-sm font-bold text-amber-700">{disc.primary_failure ? FAILURE_LABELS[disc.primary_failure] : '—'}</p>
                         </div>
                       </div>
+                      {/* Craving coaching tooltip — verbatim Craft H93 copy */}
+                      {disc.primary_craving && CRAVING_COACHING[disc.primary_craving] && (
+                        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-3">
+                          <p className="text-xs font-bold text-indigo-700 uppercase tracking-widest mb-1">
+                            🎯 Coaching note — {CRAVING_LABELS[disc.primary_craving]}
+                          </p>
+                          <p className="text-sm text-indigo-900 leading-relaxed">
+                            {CRAVING_COACHING[disc.primary_craving]}
+                          </p>
+                        </div>
+                      )}
                       {disc.q6_failure && (
                         <div className="bg-white rounded-xl p-4 border border-gray-100">
                           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Their own words on failure</p>
