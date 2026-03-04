@@ -143,7 +143,7 @@ export default function Home() {
             },
             {
               label: 'Day 1',
-              title: 'You declare who you're becoming.',
+              title: "You declare who you're becoming.",
               body: 'Not a goal. Not a resolution. An identity statement: "I am becoming the kind of person who..." This single act — saying it and meaning it — is where identity change begins.',
             },
             {
@@ -154,7 +154,7 @@ export default function Home() {
             {
               label: 'Days 8–30 (The Loop)',
               title: 'You build the loop. You live it.',
-              body: 'The sprint initiates the loop. The next 23 days are where it takes root. You have your identity declaration, your implementation plan, and a bounce-back framework for when life gets in the way. Because it will. And that's fine.',
+              body: "The sprint initiates the loop. The next 23 days are where it takes root. You have your identity declaration, your implementation plan, and a bounce-back framework for when life gets in the way. Because it will. And that's fine.",
             },
           ].map((block, i) => (
             <div key={i} className="relative">
