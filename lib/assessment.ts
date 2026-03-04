@@ -230,15 +230,40 @@ export function generateBlueprint(
     autonomy: 'You need to own the process. Prescribed routines will fail you.',
   }
 
+  const CRAVING_INSIGHTS: Record<CravingType, string> = {
+    stability: 'Most people try to build habits through willpower. You\'re wired differently — you need the environment to do the heavy lifting. When your day has structure, you follow through almost automatically. When it doesn\'t, even motivated starts collapse. The sprint is designed around this: we\'ll build systems that make the right thing the default choice, so it stops costing you energy to show up.',
+    novelty: 'The reason boring habits don\'t stick for you isn\'t a character flaw — it\'s how you\'re wired. You need the journey itself to feel interesting. The moment a routine becomes predictable busywork, you start unconsciously avoiding it. The sprint works around this: we won\'t ask you to repeat the same thing for 30 days. We\'ll build variety into the structure so showing up stays energising.',
+    connection: 'You change faster with people than alone — full stop. Accountability isn\'t a nice-to-have for you; it\'s a core part of why anything sticks. The problem with most habit systems is they\'re built for solo performers. The sprint is built around this reality: your coach relationship isn\'t a support tool, it\'s the mechanism.',
+    recognition: 'Progress you can\'t see isn\'t motivating — it\'s demoralising. For you, the feedback loop has to be visible. When you can track growth, hit milestones, and feel recognised for your effort, everything becomes easier. When progress is invisible, you disengage. The sprint is designed to make your growth undeniable — to you, and to the people who matter to you.',
+    competence: 'You\'re motivated by getting better, not just showing up. When a habit feels like practice — like you\'re building something real — you stick with it. When it feels like mechanical repetition without a skill arc, you lose interest. The sprint reframes everything as deliberate practice: every rep is evidence of who you\'re becoming, not just a box you checked.',
+    autonomy: 'Prescribed systems feel like a cage to you — even good ones. If a habit feels like someone else\'s routine that you\'re borrowing, it won\'t last. What works for you is owning the design. The sprint isn\'t a template: we\'ll build something specific to how you live, what you value, and how you think. You\'ll be designing it with us, not following instructions.',
+  }
+
   return {
     cravingProfile,
     failureProfile,
     headline: headlines[primaryCraving],
-    insight: `Your primary craving is **${CRAVING_LABELS[primaryCraving]}**, with **${CRAVING_LABELS[cravingProfile.secondary]}** as a strong secondary driver. Previous attempts likely failed because of **${FAILURE_LABELS[primaryFailure]}**. ${FAILURE_FIX[primaryFailure]}`,
+    insight: CRAVING_INSIGHTS[primaryCraving],
     designPrinciples: DESIGN_PRINCIPLES[primaryCraving],
     firstHabit: `Design your first habit around ${CRAVING_LABELS[primaryCraving].toLowerCase()} — make it feel ${primaryCraving === 'novelty' ? 'exciting' : primaryCraving === 'connection' ? 'social' : primaryCraving === 'recognition' ? 'measurable' : primaryCraving === 'competence' ? 'like practice' : primaryCraving === 'autonomy' ? 'like your choice' : 'predictable and automatic'}.`,
     warning: `Watch out: if your habit starts feeling like ${primaryCraving === 'novelty' ? 'repetitive busywork' : primaryCraving === 'connection' ? 'a solo grind' : primaryCraving === 'recognition' ? 'invisible effort' : primaryCraving === 'competence' ? 'mindless repetition' : primaryCraving === 'autonomy' ? 'someone else\'s system' : 'chaos or unpredictability'}, you\'ll disengage. Build in a reset mechanism.`,
   }
+}
+
+// ─── Failure explanation copy (Craft — H92) ─────────────────────────────────
+// Used in the results screen to replace the ternary. Each explanation:
+// - Validates the past attempt (doesn't make them feel foolish)
+// - Names the root cause (mechanism, not blame)
+// - States what the sprint does differently
+
+export const FAILURE_EXPLANATION: Record<FailureCause, string> = {
+  willpower_reliance: "You got started — that's not the problem. The problem is that motivation is unreliable by design. It spikes when things feel new, then fades. Every attempt that relied on feeling like it was always going to hit this wall. The sprint removes willpower from the equation.",
+  no_identity_anchor: "The habit never felt like you — it felt like something you were trying to do. That gap is the root cause. When the behaviour doesn't match your self-image, your brain treats it as a threat and quietly sabotages it. We start with the identity, not the habit.",
+  environment_not_designed: "Your environment worked against you — not your character. The default path in your life made the habit harder than it needed to be. Willpower doesn't beat a badly designed environment over time. We redesign the environment before we change the behaviour.",
+  habit_too_big: "You started at a level that required consistent motivation to sustain. That's a design problem, not a discipline problem. Starting big feels productive. It rarely is. We start absurdly small — small enough that skipping feels stranger than doing it.",
+  no_immediate_reward: "Without a feedback loop that fires in the moment, the brain treats the habit as invisible effort. Future rewards are too abstract to feel real. We wire in an immediate reward for every rep — something that fires the same day, not weeks later.",
+  vague_intention: "The habit existed as a plan, not as a specific trigger. 'I'll work out more' isn't a habit — it's a wish. The science is clear: if you don't have a when and a where, follow-through drops dramatically. We'll create an implementation intention so precise it almost runs itself.",
+  social_environment: "The people and contexts around you were pulling in a different direction. This isn't about them — it's about the fact that social environment is one of the strongest predictors of behaviour, full stop. We address this directly: either bring your environment on side, or create a new context where the habit is normal.",
 }
 
 export { CRAVING_LABELS, FAILURE_LABELS, FAILURE_MAP }

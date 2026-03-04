@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { generateBlueprint, CRAVING_LABELS, FAILURE_LABELS, type HabitBlueprint } from '@/lib/assessment'
+import { generateBlueprint, CRAVING_LABELS, FAILURE_LABELS, FAILURE_EXPLANATION, type HabitBlueprint } from '@/lib/assessment'
 
 type AppForm = {
   name: string; email: string; whatsapp: string
@@ -101,7 +101,7 @@ export default function Apply() {
       }),
     }).catch(() => {})
     setLoading(false)
-    setStep('done')
+    setStep('results')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -151,7 +151,7 @@ export default function Apply() {
                 </span>
               ))}
             </div>
-            <p className="text-gray-700 text-sm">{blueprint.failureProfile.causes.length > 0 && Object.entries(FAILURE_LABELS).find(([k]) => k === blueprint.failureProfile.primary)?.[1] && `The fix: ${Object.entries({ no_identity_anchor: "Start with identity, not habits.", willpower_reliance: "Build systems — remove willpower from the equation.", environment_not_designed: "Redesign your environment before changing behaviour.", habit_too_big: "Start absurdly small. 2-minute rule first.", no_immediate_reward: "Wire in an immediate reward for every rep.", vague_intention: "Create a clear implementation intention: when X, I will Y.", social_environment: "Get your environment on your side, or find a new one." }).find(([k]) => k === blueprint.failureProfile.primary)?.[1]}`}</p>
+            <p className="text-gray-700 text-sm">{FAILURE_EXPLANATION[blueprint.failureProfile.primary]}</p>
           </div>
 
           {/* Design principles */}
@@ -176,8 +176,8 @@ export default function Apply() {
 
           {/* CTA */}
           <div className="text-center bg-purple-600 rounded-2xl p-8 text-white">
-            <p className="text-xl font-bold mb-2">This is just the starting point.</p>
-            <p className="text-purple-200 mb-6 text-sm">In your discovery call, we&apos;ll use this blueprint to design your first 30 days.</p>
+            <p className="text-xl font-bold mb-2">This is yours. Now let&apos;s build on it.</p>
+            <p className="text-purple-200 mb-6 text-sm">Vignesh will review this before your discovery call. You&apos;ll walk in with a coach who already knows how you&apos;re wired.</p>
             <button onClick={() => { setStep('done'); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
               className="bg-white text-purple-700 px-8 py-3 rounded-xl font-bold hover:bg-purple-50 transition">
               I&apos;m ready — confirm my application →
@@ -196,7 +196,7 @@ export default function Apply() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="text-6xl mb-5">🙌</div>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-3">You&apos;re in, {applicantName}.</h1>
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-3">You&apos;re in{applicantName ? `, ${applicantName}` : ''}.</h1>
             <p className="text-gray-500 text-lg leading-relaxed">
               I&apos;ve got your application and your blueprint. I&apos;ll reach out within 24 hours to book your discovery call.
             </p>
