@@ -4,7 +4,19 @@ import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
 export const metadata: Metadata = {
   title: 'Identity Sprint — Become who you\'re meant to be',
-  description: 'A done-with-you identity transformation sprint. Not willpower. Not discipline. A new you.',
+  description: 'For mid-career professionals ready to change who they are, not just what they do. Applications open.',
+  openGraph: {
+    title: 'Identity Sprint — 7-Day 1:1 Coaching Program',
+    description: 'For mid-career professionals ready to change who they are, not just what they do. Applications open.',
+    url: 'https://identity-sprint.vercel.app',
+    siteName: 'Identity Sprint',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Identity Sprint — 7-Day 1:1 Coaching Program',
+    description: 'For mid-career professionals ready to change who they are, not just what they do. Applications open.',
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
