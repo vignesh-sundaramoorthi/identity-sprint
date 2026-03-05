@@ -36,6 +36,8 @@ export async function GET(_req: NextRequest) {
         dm_identity_verbatim,
         outreach_door,
         outreach_deflection_type,
+        reply_length_signal,
+        outreach_exchange_count,
         relational_anchor_type,
         post_sprint_first_checkin_status,
         post_sprint_language_signal,
@@ -112,6 +114,8 @@ export async function PATCH(req: NextRequest) {
   if ('outcome_type' in fields) applicationFields.outcome_type = fields.outcome_type
   if ('outreach_door' in fields) applicationFields.outreach_door = fields.outreach_door
   if ('outreach_deflection_type' in fields) applicationFields.outreach_deflection_type = fields.outreach_deflection_type
+  if ('reply_length_signal' in fields) applicationFields.reply_length_signal = fields.reply_length_signal || null
+  if ('outreach_exchange_count' in fields) applicationFields.outreach_exchange_count = fields.outreach_exchange_count === '' || fields.outreach_exchange_count === null ? null : Number(fields.outreach_exchange_count)
   // BUG-017: coerce empty string → null for CHECK-constrained fields (Postgres rejects "" but accepts NULL)
   if ('relational_anchor_type' in fields) applicationFields.relational_anchor_type = fields.relational_anchor_type || null
   if ('post_sprint_first_checkin_status' in fields) applicationFields.post_sprint_first_checkin_status = fields.post_sprint_first_checkin_status || null

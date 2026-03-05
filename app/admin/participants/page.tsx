@@ -100,6 +100,8 @@ interface Application {
   week_3_badge?: string; dm_identity_verbatim?: string
   outreach_door?: string
   outreach_deflection_type?: string
+  reply_length_signal?: string
+  outreach_exchange_count?: number | null
   relational_anchor_type?: string
   post_sprint_first_checkin_status?: string
   post_sprint_language_signal?: string
@@ -190,6 +192,8 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   const [outcome, setOutcome] = useState(app.outcome_type ?? '')
   const [outreachDoor, setOutreachDoor] = useState(app.outreach_door ?? 'unknown')
   const [deflectionType, setDeflectionType] = useState(app.outreach_deflection_type ?? 'no_reply')
+  const [replyLengthSignal, setReplyLengthSignal] = useState(app.reply_length_signal ?? '')
+  const [exchangeCount, setExchangeCount] = useState<string>(app.outreach_exchange_count != null ? String(app.outreach_exchange_count) : '')
   const [relanchorType, setRelanchorType] = useState(app.relational_anchor_type ?? '')
   const [postCheckinStatus, setPostCheckinStatus] = useState(app.post_sprint_first_checkin_status ?? '')
   const [postLangSignal, setPostLangSignal] = useState(app.post_sprint_language_signal ?? '')
@@ -214,6 +218,8 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
       outcome_type: outcome,
       outreach_door: outreachDoor,
       outreach_deflection_type: deflectionType,
+      reply_length_signal: replyLengthSignal,
+      outreach_exchange_count: exchangeCount,
       relational_anchor_type: relanchorType,
       post_sprint_first_checkin_status: postCheckinStatus,
       post_sprint_language_signal: postLangSignal,
@@ -316,6 +322,41 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
             <option value="maybe_later">Maybe later — avoidance (Day 14-16 re-ping only)</option>
           </select>
           <p className="text-xs text-gray-400 mt-1">Set after first reply lands. koe_question = highest intent (25-40% conv.)</p>
+        </div>
+      )}
+
+      {/* Reply Length Signal — craving inference from DM reply length */}
+      {outreachDoor !== 'unknown' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+              Reply Length Signal
+              <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="How long was their first reply? Log this mid-DM-conversation. brief = MASTERY signal → short reply back, one direct question, match their register. moderate = RECOGNITION/CONNECTION mix → professional tone or warm opener. extended = CONNECTION signal → empathy-first, give them space, do not rush the link. Forward question (what does it involve / when does it start) at any length = buyer signal.">ⓘ</span>
+            </label>
+            <select value={replyLengthSignal} onChange={(e) => setReplyLengthSignal(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+              <option value="">Not set</option>
+              <option value="brief">brief (MASTERY signal)</option>
+              <option value="moderate">moderate (RECOGNITION/CONNECTION mix)</option>
+              <option value="extended">extended (CONNECTION signal)</option>
+            </select>
+            <p className="text-xs text-gray-400 mt-1">Set mid-conversation. Informs your next DM tone.</p>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+              Exchanges to Application
+              <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="How many DM exchanges happened before they applied? Log at application received. Null until then. Tests the extended-path hypothesis: did 3+ exchanges lead to higher sprint completion? Compare at Cohort 1 debrief.">ⓘ</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="20"
+              value={exchangeCount}
+              onChange={(e) => setExchangeCount(e.target.value)}
+              placeholder="e.g. 3"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400"
+            />
+            <p className="text-xs text-gray-400 mt-1">Log when they apply. Hypothesis: 3+ exchanges → higher completion.</p>
+          </div>
         </div>
       )}
 
