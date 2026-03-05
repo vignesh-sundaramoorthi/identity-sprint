@@ -99,6 +99,7 @@ interface Application {
   stage_signal?: string; pre_sprint_signal?: string
   week_3_badge?: string; dm_identity_verbatim?: string
   outreach_door?: string
+  outreach_deflection_type?: string
   relational_anchor_type?: string
   post_sprint_first_checkin_status?: string
   post_sprint_language_signal?: string
@@ -188,6 +189,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   const [stageSig, setStageSig] = useState(app.stage_signal ?? '')
   const [outcome, setOutcome] = useState(app.outcome_type ?? '')
   const [outreachDoor, setOutreachDoor] = useState(app.outreach_door ?? 'unknown')
+  const [deflectionType, setDeflectionType] = useState(app.outreach_deflection_type ?? 'no_reply')
   const [relanchorType, setRelanchorType] = useState(app.relational_anchor_type ?? '')
   const [postCheckinStatus, setPostCheckinStatus] = useState(app.post_sprint_first_checkin_status ?? '')
   const [postLangSignal, setPostLangSignal] = useState(app.post_sprint_language_signal ?? '')
@@ -211,6 +213,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
       stage_signal: stageSig,
       outcome_type: outcome,
       outreach_door: outreachDoor,
+      outreach_deflection_type: deflectionType,
       relational_anchor_type: relanchorType,
       post_sprint_first_checkin_status: postCheckinStatus,
       post_sprint_language_signal: postLangSignal,
@@ -296,6 +299,25 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
         </select>
         <p className="text-xs text-gray-400 mt-1">Set manually. Which outreach message did you send them?</p>
       </div>
+
+      {/* Outreach Reply Signal — deflection type → conversion correlation */}
+      {outreachDoor !== 'unknown' && (
+        <div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+            Outreach Reply Signal
+            <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="What was the prospect&apos;s first reply? Each type predicts different conversion probability: koe_question (25-40% — highest intent, philosophy adopted, needs container) → what_is_it (20-35% — genuine curiosity, HIGH intent, explain well) → how_much (15-25% — buying signal, answer structure first, price second) → none/positive reply (45-60% — no friction) → maybe_later (8-15% — avoidance, Day 14-16 re-ping only, never same week) → no_reply (3-8% — silence, Day 7-10 follow-up, not rejection). Default: no_reply.">ⓘ</span>
+          </label>
+          <select value={deflectionType} onChange={(e) => setDeflectionType(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+            <option value="no_reply">No reply (silence)</option>
+            <option value="none">Positive reply — no friction</option>
+            <option value="koe_question">Koe question — highest intent</option>
+            <option value="what_is_it">What is it? — genuine curiosity</option>
+            <option value="how_much">How much? — price signal</option>
+            <option value="maybe_later">Maybe later — avoidance (Day 14-16 re-ping only)</option>
+          </select>
+          <p className="text-xs text-gray-400 mt-1">Set after first reply lands. koe_question = highest intent (25-40% conv.)</p>
+        </div>
+      )}
 
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">

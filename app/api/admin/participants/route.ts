@@ -35,6 +35,7 @@ export async function GET(_req: NextRequest) {
         week_3_badge,
         dm_identity_verbatim,
         outreach_door,
+        outreach_deflection_type,
         relational_anchor_type,
         post_sprint_first_checkin_status,
         post_sprint_language_signal,
@@ -110,6 +111,7 @@ export async function PATCH(req: NextRequest) {
   if ('stage_signal' in fields) applicationFields.stage_signal = fields.stage_signal
   if ('outcome_type' in fields) applicationFields.outcome_type = fields.outcome_type
   if ('outreach_door' in fields) applicationFields.outreach_door = fields.outreach_door
+  if ('outreach_deflection_type' in fields) applicationFields.outreach_deflection_type = fields.outreach_deflection_type
   // BUG-017: coerce empty string → null for CHECK-constrained fields (Postgres rejects "" but accepts NULL)
   if ('relational_anchor_type' in fields) applicationFields.relational_anchor_type = fields.relational_anchor_type || null
   if ('post_sprint_first_checkin_status' in fields) applicationFields.post_sprint_first_checkin_status = fields.post_sprint_first_checkin_status || null

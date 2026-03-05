@@ -10,7 +10,8 @@ ALTER TABLE applications
   ADD COLUMN IF NOT EXISTS sprint_completion_statement_type TEXT CHECK (sprint_completion_statement_type IN ('categorical', 'process', 'relational', 'null')),
   ADD COLUMN IF NOT EXISTS moment_flag BOOLEAN DEFAULT FALSE,
   ADD COLUMN IF NOT EXISTS moment_text TEXT,
-  ADD COLUMN IF NOT EXISTS outreach_door TEXT CHECK (outreach_door IN ('a', 'b', 'unknown')) DEFAULT 'unknown';
+  ADD COLUMN IF NOT EXISTS outreach_door TEXT CHECK (outreach_door IN ('a', 'b', 'unknown')) DEFAULT 'unknown',
+  ADD COLUMN IF NOT EXISTS outreach_deflection_type TEXT CHECK (outreach_deflection_type IN ('what_is_it', 'how_much', 'maybe_later', 'koe_question', 'none', 'no_reply')) DEFAULT 'no_reply';
 
 COMMENT ON COLUMN applications.sprint_completion_statement IS 'New Chapter identity artifact — the statement the participant wrote at sprint close.';
 COMMENT ON COLUMN applications.relational_anchor_type IS 'Did participant name a relational witness spontaneously, after prompting, or not at all?';
@@ -20,3 +21,4 @@ COMMENT ON COLUMN applications.sprint_completion_statement_type IS 'Type classif
 COMMENT ON COLUMN applications.moment_flag IS 'Recognition moment flag — was a notable recognition moment observed?';
 COMMENT ON COLUMN applications.moment_text IS 'Verbatim or coach note describing the recognition moment.';
 COMMENT ON COLUMN applications.outreach_door IS 'Door A = Rescue Frame, Door B = Optimization Frame. Vignesh sets manually from outreach context.';
+COMMENT ON COLUMN applications.outreach_deflection_type IS 'First reply signal from prospect. Predicts conversion probability: koe_question (25-40%), what_is_it (20-35%), how_much (15-25%), none/positive (45-60%), maybe_later (8-15%), no_reply (3-8%). Data window opens DM #1.';
