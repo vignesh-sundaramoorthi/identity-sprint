@@ -264,7 +264,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Pre-Sprint Signal</label>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Pre-Sprint Signal<span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="H1 = identity-level recognition ('That is exactly it'). H2 = suppressed awareness ('Had not thought of it'). Can set BEFORE sending the DM based on LinkedIn About section vocabulary (identity language → H1, habit/systems language → H2), OR set during/after the DM exchange. Either is valid.">ⓘ</span></label>
           <select value={preSig} onChange={(e) => setPreSig(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
             <option value="">Not set</option>
             <option value="H1">H1 — That is exactly it</option>
