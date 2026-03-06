@@ -100,8 +100,10 @@ interface Application {
   week_3_badge?: string; dm_identity_verbatim?: string
   outreach_door?: string
   outreach_deflection_type?: string
+  deflection_logged_at?: string | null
   reply_length_signal?: string
   outreach_exchange_count?: number | null
+  outreach_dm_variant?: string | null
   relational_anchor_type?: string
   post_sprint_first_checkin_status?: string
   post_sprint_language_signal?: string
@@ -194,6 +196,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   const [deflectionType, setDeflectionType] = useState(app.outreach_deflection_type ?? 'no_reply')
   const [replyLengthSignal, setReplyLengthSignal] = useState(app.reply_length_signal ?? '')
   const [exchangeCount, setExchangeCount] = useState<string>(app.outreach_exchange_count != null ? String(app.outreach_exchange_count) : '')
+  const [dmVariant, setDmVariant] = useState(app.outreach_dm_variant ?? '')
   const [relanchorType, setRelanchorType] = useState(app.relational_anchor_type ?? '')
   const [postCheckinStatus, setPostCheckinStatus] = useState(app.post_sprint_first_checkin_status ?? '')
   const [postLangSignal, setPostLangSignal] = useState(app.post_sprint_language_signal ?? '')
@@ -220,6 +223,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
       outreach_deflection_type: deflectionType,
       reply_length_signal: replyLengthSignal,
       outreach_exchange_count: exchangeCount,
+      outreach_dm_variant: dmVariant,
       relational_anchor_type: relanchorType,
       post_sprint_first_checkin_status: postCheckinStatus,
       post_sprint_language_signal: postLangSignal,
@@ -304,6 +308,22 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
           <option value="b">Door B — Optimization Frame</option>
         </select>
         <p className="text-xs text-gray-400 mt-1">Set manually. Which outreach message did you send them?</p>
+      </div>
+
+      {/* DM Variant — which A3 DM was sent (set BEFORE sending) */}
+      <div>
+        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+          DM Variant Sent
+          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which A3 DM variant did you send? Set this BEFORE sending the DM. A3-H1-A = Standard H1 (fresh interest, first-timer frame). A3-H1-B = Variant B (Day 190+, tried-multiple-things, accumulation-of-failure frame — use for prospects 6+ months post-Koe). A3-H2-A = Standard H2 (Suppressed Waiter, behavior vocab in About). warm-contact = existing network contact, no A3 protocol applied. Critical for post-cohort debrief: prevents variant archaeology.">ⓘ</span>
+        </label>
+        <select value={dmVariant} onChange={(e) => setDmVariant(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+          <option value="">Not set</option>
+          <option value="A3-H1-A">A3-H1-A — Standard H1 (fresh interest / first-timer)</option>
+          <option value="A3-H1-B">A3-H1-B — Variant B (Day 190+, accumulation-of-failure)</option>
+          <option value="A3-H2-A">A3-H2-A — Standard H2 (Suppressed Waiter)</option>
+          <option value="warm-contact">warm-contact — Existing network (no A3 protocol)</option>
+        </select>
+        <p className="text-xs text-gray-400 mt-1">Set <strong>before</strong> sending the DM. Enables post-cohort variant analysis.</p>
       </div>
 
       {/* Outreach Reply Signal — deflection type → conversion correlation */}
