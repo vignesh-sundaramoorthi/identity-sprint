@@ -40,6 +40,9 @@ type Application = {
   submitted_at: string; status: string; identity_goal: string
   tried_before: string; why_now: string; commitment: string
   habit_recommendation?: string | null
+  habit_recommendation_feedback?: string | null
+  habit_recommendation_custom?: string | null
+  dm_identity_verbatim?: string | null
 }
 
 type Discovery = {
@@ -195,12 +198,17 @@ export default async function Admin() {
                     </div>
                   )}
 
-                  {/* Phase 2 — Discovery Call Guide (domain selector + gateway habit card) */}
+                  {/* Phase 2 Improvement — Discovery Call Guide (3 ranked recommendations + coach feedback) */}
                   <div className="p-6 pt-0">
                     <DiscoveryCallGuide
                       applicationId={app.id}
                       identityGoal={app.identity_goal}
                       currentHabitRec={app.habit_recommendation}
+                      currentHabitFeedback={app.habit_recommendation_feedback}
+                      currentHabitCustom={app.habit_recommendation_custom}
+                      dmIdentityVerbatim={app.dm_identity_verbatim}
+                      whyNow={app.why_now}
+                      triedBefore={app.tried_before}
                     />
                   </div>
                 </div>

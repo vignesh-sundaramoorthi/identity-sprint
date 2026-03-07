@@ -3,27 +3,60 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth } from '@/lib/adminAuth'
 
 // PATCH /api/admin/applications/habit
-// Sets habit_recommendation on a specific application
-// Body: { id: number, habit_recommendation: string }
+// Sets habit_recommendation and/or coach feedback on a specific application
+// Body: {
+//   id: number,
+//   habit_recommendation?: string,
+//   habit_recommendation_feedback?: 'helpful' | 'not_helpful' | 'custom',
+//   habit_recommendation_custom?: string | null,
+// }
 
 export async function PATCH(req: NextRequest) {
   const authError = requireAdminAuth()
   if (authError) return authError
 
   const body = await req.json()
-  const { id, habit_recommendation } = body
+  const {
+    id,
+    habit_recommendation,
+    habit_recommendation_feedback,
+    habit_recommendation_custom,
+  } = body
 
-  if (!id || !habit_recommendation) {
-    return NextResponse.json({ error: 'id and habit_recommendation required' }, { status: 400 })
+  if (!id) {
+    return NextResponse.json({ error: 'id required' }, { status: 400 })
+  }
+
+  // Build update payload — only include fields present in request
+  const updates: Record<string, unknown> = {}
+  if (habit_recommendation !== undefined) {
+    updates.habit_recommendation = habit_recommendation
+  }
+  if (habit_recommendation_feedback !== undefined) {
+    const allowed = ['helpful', 'not_helpful', 'custom']
+    if (!allowed.includes(habit_recommendation_feedback)) {
+      return NextResponse.json(
+        { error: 'habit_recommendation_feedback must be helpful | not_helpful | custom' },
+        { status: 400 }
+      )
+    }
+    updates.habit_recommendation_feedback = habit_recommendation_feedback
+  }
+  if (habit_recommendation_custom !== undefined) {
+    updates.habit_recommendation_custom = habit_recommendation_custom
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
   }
 
   const { error } = await supabaseAdmin
     .from('applications')
-    .update({ habit_recommendation })
+    .update(updates)
     .eq('id', id)
 
   if (error) {
-    console.error('habit_recommendation update error:', error)
+    console.error('habit update error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
