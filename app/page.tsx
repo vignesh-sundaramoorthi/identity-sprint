@@ -281,7 +281,7 @@ export default function Home() {
       <section className="max-w-3xl mx-auto px-6 py-20">
         <h2 className="text-3xl font-bold text-gray-900 mb-6">Simple, honest pricing</h2>
         <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 mb-8">
-          <div className="text-5xl font-extrabold text-gray-900 mb-4">₹6,000</div>
+          <div className="text-5xl font-extrabold text-gray-900 mb-4">$497 AUD</div>
           <p className="text-gray-600 text-lg leading-relaxed mb-4">
             That's it. No session credits. No auto-renewal. No upsell at the end.
           </p>

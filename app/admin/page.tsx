@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase'
+import DiscoveryCallGuide from './components/DiscoveryCallGuide'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -38,6 +39,7 @@ type Application = {
   id: number; name: string; email: string; whatsapp?: string
   submitted_at: string; status: string; identity_goal: string
   tried_before: string; why_now: string; commitment: string
+  habit_recommendation?: string | null
 }
 
 type Discovery = {
@@ -192,6 +194,15 @@ export default async function Admin() {
                       )}
                     </div>
                   )}
+
+                  {/* Phase 2 — Discovery Call Guide (domain selector + gateway habit card) */}
+                  <div className="p-6 pt-0">
+                    <DiscoveryCallGuide
+                      applicationId={app.id}
+                      identityGoal={app.identity_goal}
+                      currentHabitRec={app.habit_recommendation}
+                    />
+                  </div>
                 </div>
               )
             })}

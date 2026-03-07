@@ -189,17 +189,33 @@ export default function Apply() {
   }
 
   // ─── DONE ────────────────────────────────────────────────────────────────────
+  // Null-state copy: Craft H83 verbatim — highest-churn window is the 24h wait.
+  // This screen holds commitment while Vignesh reviews and books the discovery call.
   if (step === 'done') {
     return (
       <main className="min-h-screen bg-white px-6 py-12">
         <div className="max-w-lg mx-auto">
-          {/* Header */}
+          {/* Header — null-state copy (Craft H83 verbatim) */}
           <div className="text-center mb-8">
             <div className="text-6xl mb-5">🙌</div>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-3">You&apos;re in{applicantName ? `, ${applicantName}` : ''}.</h1>
-            <p className="text-gray-500 text-lg leading-relaxed">
-              I&apos;ve got your application and your blueprint. I&apos;ll reach out within 24 hours to book your discovery call.
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-3">
+              You&apos;ve started something real.
+            </h1>
+            {form.identity_goal && (
+              <p className="text-purple-700 font-semibold text-lg mb-3">
+                You said you want to become {form.identity_goal.toLowerCase().startsWith('the kind of person') ? form.identity_goal : `"${form.identity_goal}"`}. That&apos;s not a small thing to say.
+              </p>
+            )}
+            <p className="text-gray-500 text-base leading-relaxed">
+              Vignesh will review your application personally and reach out to book your discovery call — usually within 24 hours.
             </p>
+            <p className="text-gray-500 text-base leading-relaxed mt-3">
+              That call is where everything gets specific. What you start with. Why it&apos;ll actually stick this time. How the sprint works for you.
+            </p>
+            <p className="text-gray-500 text-base leading-relaxed mt-3">
+              You don&apos;t need to do anything right now. Just notice: you&apos;ve already made a decision most people never make.
+            </p>
+            <p className="text-gray-400 text-sm mt-4">⏱ Discovery calls typically happen within 24 hours of application.</p>
           </div>
 
           {/* Week 1 preview — Phase 3 PR1 (RICE 288) */}
@@ -236,19 +252,29 @@ export default function Apply() {
           <div className="bg-purple-50 rounded-2xl p-6 text-left mb-5">
             <p className="font-semibold text-gray-800 mb-3">What happens next:</p>
             <ol className="space-y-2 text-sm text-gray-600">
-              <li>1. I review your application + blueprint (same day)</li>
-              <li>2. I message you to book your 30-min discovery call</li>
-              <li>3. We build your first 30-day identity sprint together</li>
+              <li>1. Vignesh reviews your application + blueprint (same day)</li>
+              <li>2. He messages you to book your 30-min discovery call</li>
+              <li>3. The call is where your sprint takes shape — the one habit to start with, your identity anchor, your first week plan</li>
             </ol>
           </div>
 
           {/* Commitment half-life extension (Craft) */}
-          <div className="border border-gray-200 rounded-2xl p-6 text-left mb-8 bg-gray-50">
+          <div className="border border-gray-200 rounded-2xl p-6 text-left mb-5 bg-gray-50">
             <p className="font-semibold text-gray-800 mb-3">One thing that will make your discovery call more useful:</p>
             <p className="text-gray-600 text-sm leading-relaxed mb-2">
               Write down the habit or change you&apos;ve tried the most times — and never made stick. Be specific.
             </p>
             <p className="text-gray-500 text-sm">You don&apos;t need to send it to us. It&apos;s for you. We&apos;ll start there.</p>
+          </div>
+
+          {/* Contact line — Craft H83 */}
+          <div className="text-center mb-8">
+            <p className="text-gray-400 text-sm">
+              Questions? You can reach Vignesh directly at{' '}
+              <a href="mailto:v80102050@gmail.com" className="text-purple-600 hover:underline">
+                v80102050@gmail.com
+              </a>
+            </p>
           </div>
 
           <div className="text-center">
