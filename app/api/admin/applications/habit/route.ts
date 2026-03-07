@@ -9,6 +9,7 @@ import { requireAdminAuth } from '@/lib/adminAuth'
 //   habit_recommendation?: string,
 //   habit_recommendation_feedback?: 'helpful' | 'not_helpful' | 'custom',
 //   habit_recommendation_custom?: string | null,
+//   habit_recommendation_chosen?: string | null,   // learning signal: actual habit prescribed
 // }
 
 export async function PATCH(req: NextRequest) {
@@ -21,6 +22,7 @@ export async function PATCH(req: NextRequest) {
     habit_recommendation,
     habit_recommendation_feedback,
     habit_recommendation_custom,
+    habit_recommendation_chosen,
   } = body
 
   if (!id) {
@@ -44,6 +46,9 @@ export async function PATCH(req: NextRequest) {
   }
   if (habit_recommendation_custom !== undefined) {
     updates.habit_recommendation_custom = habit_recommendation_custom
+  }
+  if (habit_recommendation_chosen !== undefined) {
+    updates.habit_recommendation_chosen = habit_recommendation_chosen
   }
 
   if (Object.keys(updates).length === 0) {

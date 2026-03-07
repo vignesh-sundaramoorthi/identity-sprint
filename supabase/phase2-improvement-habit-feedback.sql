@@ -14,6 +14,13 @@ ALTER TABLE applications
 ALTER TABLE applications
   ADD COLUMN IF NOT EXISTS habit_recommendation_custom TEXT;
 
+-- habit_recommendation_chosen: the actual habit assigned (learning signal)
+-- Captures which habit coach prescribed regardless of feedback rating.
+-- Populated on every Assign click — not just when feedback = 'custom'.
+-- Enables: "which system Rank was override most common?" at Cohort 1 debrief.
+ALTER TABLE applications
+  ADD COLUMN IF NOT EXISTS habit_recommendation_chosen TEXT;
+
 -- Verify
 SELECT column_name, data_type
 FROM information_schema.columns
@@ -21,6 +28,7 @@ WHERE table_name = 'applications'
   AND column_name IN (
     'habit_recommendation',
     'habit_recommendation_feedback',
-    'habit_recommendation_custom'
+    'habit_recommendation_custom',
+    'habit_recommendation_chosen'
   )
 ORDER BY column_name;

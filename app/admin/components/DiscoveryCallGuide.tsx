@@ -74,7 +74,13 @@ export default function DiscoveryCallGuide({
       const res = await fetch('/api/admin/applications/habit', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: applicationId, habit_recommendation: name }),
+        // habit_recommendation_chosen = the learning signal (always captured on Assign)
+        // Tracks which habit coach actually prescribed, enabling Rank-override analysis at Cohort 1 debrief
+        body: JSON.stringify({
+          id: applicationId,
+          habit_recommendation: name,
+          habit_recommendation_chosen: name,
+        }),
       })
       if (res.ok) {
         setHabitRec(name)
