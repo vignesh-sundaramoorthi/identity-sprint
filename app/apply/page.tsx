@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { generateBlueprint, CRAVING_LABELS, FAILURE_LABELS, type HabitBlueprint } from '@/lib/assessment'
+import { generateBlueprint, CRAVING_LABELS, FAILURE_LABELS, FAILURE_EXPLANATION, type HabitBlueprint } from '@/lib/assessment'
 
 type AppForm = {
   name: string; email: string; whatsapp: string
@@ -101,7 +101,7 @@ export default function Apply() {
       }),
     }).catch(() => {})
     setLoading(false)
-    setStep('done')
+    setStep('results')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -151,7 +151,7 @@ export default function Apply() {
                 </span>
               ))}
             </div>
-            <p className="text-gray-700 text-sm">{blueprint.failureProfile.causes.length > 0 && Object.entries(FAILURE_LABELS).find(([k]) => k === blueprint.failureProfile.primary)?.[1] && `The fix: ${Object.entries({ no_identity_anchor: "Start with identity, not habits.", willpower_reliance: "Build systems — remove willpower from the equation.", environment_not_designed: "Redesign your environment before changing behaviour.", habit_too_big: "Start absurdly small. 2-minute rule first.", no_immediate_reward: "Wire in an immediate reward for every rep.", vague_intention: "Create a clear implementation intention: when X, I will Y.", social_environment: "Get your environment on your side, or find a new one." }).find(([k]) => k === blueprint.failureProfile.primary)?.[1]}`}</p>
+            <p className="text-gray-700 text-sm">{FAILURE_EXPLANATION[blueprint.failureProfile.primary]}</p>
           </div>
 
           {/* Design principles */}
@@ -176,8 +176,8 @@ export default function Apply() {
 
           {/* CTA */}
           <div className="text-center bg-purple-600 rounded-2xl p-8 text-white">
-            <p className="text-xl font-bold mb-2">This is just the starting point.</p>
-            <p className="text-purple-200 mb-6 text-sm">In your discovery call, we&apos;ll use this blueprint to design your first 30 days.</p>
+            <p className="text-xl font-bold mb-2">This is yours. Now let&apos;s build on it.</p>
+            <p className="text-purple-200 mb-6 text-sm">Vignesh will review this before your discovery call. You&apos;ll walk in with a coach who already knows how you&apos;re wired.</p>
             <button onClick={() => { setStep('done'); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
               className="bg-white text-purple-700 px-8 py-3 rounded-xl font-bold hover:bg-purple-50 transition">
               I&apos;m ready — confirm my application →
@@ -191,23 +191,58 @@ export default function Apply() {
   // ─── DONE ────────────────────────────────────────────────────────────────────
   if (step === 'done') {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center px-6">
-        <div className="max-w-lg text-center">
-          <div className="text-6xl mb-6">🙌</div>
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-4">You&apos;re in, {applicantName}.</h1>
-          <p className="text-gray-500 text-lg leading-relaxed mb-6">
-            I&apos;ve got your application and your blueprint. I&apos;ll reach out within 24 hours to book your discovery call.
-          </p>
-          <div className="bg-purple-50 rounded-2xl p-6 text-left mb-6">
+      <main className="min-h-screen bg-white px-6 py-12">
+        <div className="max-w-lg mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-5">🙌</div>
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-3">You&apos;re in{applicantName ? `, ${applicantName}` : ''}.</h1>
+            <p className="text-gray-500 text-lg leading-relaxed">
+              I&apos;ve got your application and your blueprint. I&apos;ll reach out within 24 hours to book your discovery call.
+            </p>
+          </div>
+
+          {/* Week 1 preview — Phase 3 PR1 (RICE 288) */}
+          <div className="bg-gray-900 rounded-2xl p-6 mb-6 text-white">
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">Here&apos;s what Week 1 looks like</p>
+            <div className="space-y-4">
+              <div className="flex gap-4 items-start">
+                <div className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0 text-lg">📞</div>
+                <div>
+                  <p className="font-semibold text-white text-sm">One discovery call</p>
+                  <p className="text-gray-400 text-sm mt-0.5">30 minutes. We map your identity target, find your gateway habit, and design your first sprint together. No generic plan — built around how you&apos;re wired.</p>
+                </div>
+              </div>
+              <div className="border-t border-gray-800" />
+              <div className="flex gap-4 items-start">
+                <div className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0 text-lg">🎯</div>
+                <div>
+                  <p className="font-semibold text-white text-sm">One habit</p>
+                  <p className="text-gray-400 text-sm mt-0.5">Not a list. One gateway habit chosen from your blueprint — small enough to start today, meaningful enough to build identity on. You&apos;ll know exactly when and where to do it.</p>
+                </div>
+              </div>
+              <div className="border-t border-gray-800" />
+              <div className="flex gap-4 items-start">
+                <div className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0 text-lg">✅</div>
+                <div>
+                  <p className="font-semibold text-white text-sm">One weekly check-in</p>
+                  <p className="text-gray-400 text-sm mt-0.5">A short reflection — what&apos;s working, what&apos;s not, what to adjust. Takes 5 minutes. Keeps the sprint alive and responsive to real life.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* What happens next */}
+          <div className="bg-purple-50 rounded-2xl p-6 text-left mb-5">
             <p className="font-semibold text-gray-800 mb-3">What happens next:</p>
             <ol className="space-y-2 text-sm text-gray-600">
               <li>1. I review your application + blueprint (same day)</li>
-              <li>2. I message you to book a 30-min discovery call</li>
+              <li>2. I message you to book your 30-min discovery call</li>
               <li>3. We build your first 30-day identity sprint together</li>
             </ol>
           </div>
 
-          {/* Confirmation page callout — commitment half-life extension (Craft, pre-Cohort 1) */}
+          {/* Commitment half-life extension (Craft) */}
           <div className="border border-gray-200 rounded-2xl p-6 text-left mb-8 bg-gray-50">
             <p className="font-semibold text-gray-800 mb-3">One thing that will make your discovery call more useful:</p>
             <p className="text-gray-600 text-sm leading-relaxed mb-2">
@@ -216,7 +251,9 @@ export default function Apply() {
             <p className="text-gray-500 text-sm">You don&apos;t need to send it to us. It&apos;s for you. We&apos;ll start there.</p>
           </div>
 
-          <Link href="/" className="text-purple-600 font-semibold hover:underline">← Back to home</Link>
+          <div className="text-center">
+            <Link href="/" className="text-purple-600 font-semibold hover:underline">← Back to home</Link>
+          </div>
         </div>
       </main>
     )
