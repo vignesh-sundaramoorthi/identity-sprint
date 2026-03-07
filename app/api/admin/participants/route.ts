@@ -21,6 +21,7 @@ export async function GET(_req: NextRequest) {
       identity_profile_approved,
       identity_profile_approved_at,
       anchor_statement,
+      snapshot,
       applications (
         id,
         name,

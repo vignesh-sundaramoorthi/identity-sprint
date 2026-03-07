@@ -123,6 +123,7 @@ interface Participant {
   identity_profile_approved?: boolean | null
   identity_profile_approved_at?: string | null
   anchor_statement?: string | null
+  snapshot?: string | null  // BUG-020 fix: coach-authored day-in-the-life snapshot
   applications: Application
 }
 
@@ -214,6 +215,11 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   const [identityProfile, setIdentityProfile] = useState<IdentityProfile | null>(participant.identity_profile ?? null)
   const [profileApproved, setProfileApproved] = useState(participant.identity_profile_approved ?? false)
   const [anchorStatement, setAnchorStatement] = useState(participant.anchor_statement ?? '')
+  // BUG-020 fix (Forge H175): snapshot was uncontrolled — text silently lost on refresh.
+  // Snapshot is the highest-trust coaching artifact; it cannot be recovered post-call.
+  // Pattern mirrors anchorStatement: controlled state + persisted via approve body.
+  const [snapshot, setSnapshot] = useState(participant.snapshot ?? '')
+  const [showSnapshotGuide, setShowSnapshotGuide] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [approving, setApproving] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
@@ -254,6 +260,8 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
         body: JSON.stringify({
           participant_id: String(participant.id),
           anchor_statement: anchorStatement.trim() || undefined,
+          // BUG-020 fix: include snapshot in approve body so it persists to DB
+          snapshot: snapshot.trim() || undefined,
         }),
       })
       const data = await res.json()
@@ -478,10 +486,47 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
 
         {/* Coach-authored fields — Flux H174 LOCKED: these are NOT AI-generated */}
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
-            Day-in-the-life snapshot
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide">
+              Day-in-the-life snapshot
+            </label>
+            {/* Craft H175 Option A: "How to write this" accordion — collapses by default */}
+            {!profileApproved && (
+              <button
+                type="button"
+                onClick={() => setShowSnapshotGuide(v => !v)}
+                className="text-xs text-indigo-500 hover:text-indigo-700 underline"
+              >
+                {showSnapshotGuide ? 'Hide guide' : 'How to write this'}
+              </button>
+            )}
+          </div>
+          {showSnapshotGuide && (
+            <div className="mb-2 bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-xs text-indigo-800 space-y-2">
+              <p className="font-semibold">Three parts every snapshot needs:</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li><span className="font-medium">Opening habit moment</span> — What does their morning / evening / specific time look like?</li>
+                <li><span className="font-medium">Decision frame</span> — What do they do when tempted that they don&apos;t do now?</li>
+                <li><span className="font-medium">Identity anchor line</span> — Their own words reframed in first person, stated as already true.</li>
+              </ol>
+              <p className="font-semibold mt-1">Template:</p>
+              <p className="font-mono bg-white rounded-lg p-2 border border-indigo-100 leading-relaxed">
+                I wake up [specific time/detail].<br/>
+                [Small daily practice they mentioned — present tense.]<br/><br/>
+                When [the specific trigger they named], I [what the new version of them does].<br/><br/>
+                [Closing identity line — their words, first person.]
+              </p>
+              <ul className="list-disc list-inside space-y-1 mt-1">
+                <li>Use <span className="font-medium">their words</span> wherever possible</li>
+                <li><span className="font-medium">2–3 sentences</span> is right — longer = description, not snapshot</li>
+                <li>Aim for specific and true, not beautiful</li>
+                <li><span className="font-medium">Write it same day</span> — the call is live in your memory now</li>
+              </ul>
+            </div>
+          )}
           <textarea
+            value={snapshot}
+            onChange={(e) => setSnapshot(e.target.value)}
             rows={3}
             placeholder="Write this after your discovery call. First-person, specific to what they actually said."
             className="w-full border border-indigo-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-500 resize-none disabled:bg-gray-50 disabled:text-gray-400"
