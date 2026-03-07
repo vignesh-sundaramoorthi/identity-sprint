@@ -108,9 +108,21 @@ interface Application {
   moment_text?: string
 }
 
+interface IdentityProfile {
+  label: string
+  qualities: string[]
+  signal_tone: 'H1' | 'H2' | 'none'
+  generated_at: string
+}
+
 interface Participant {
   id: number; application_id: number; cohort_id?: number
   enrolled_at: string; status: string; habit_recommendation?: string
+  // Phase 4 — Identity Profile fields (requires phase4-identity-profile.sql migration)
+  identity_profile?: IdentityProfile | null
+  identity_profile_approved?: boolean | null
+  identity_profile_approved_at?: string | null
+  anchor_statement?: string | null
   applications: Application
 }
 
@@ -195,12 +207,64 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   const [completionStatType, setCompletionStatType] = useState(app.sprint_completion_statement_type ?? '')
   const [momentFlag, setMomentFlag] = useState(app.moment_flag ?? false)
   const [momentText, setMomentText] = useState(app.moment_text ?? '')
+  // Phase 4 — Identity Profile state
+  const [signalTone, setSignalTone] = useState<'H1' | 'H2' | 'none'>(
+    (app.pre_sprint_signal as 'H1' | 'H2' | 'none') || 'none'
+  )
+  const [identityProfile, setIdentityProfile] = useState<IdentityProfile | null>(participant.identity_profile ?? null)
+  const [profileApproved, setProfileApproved] = useState(participant.identity_profile_approved ?? false)
+  const [anchorStatement, setAnchorStatement] = useState(participant.anchor_statement ?? '')
+  const [generating, setGenerating] = useState(false)
+  const [approving, setApproving] = useState(false)
+  const [profileError, setProfileError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const ratings = checkins.map((c) => c.identity_rating)
   const walls = checkins.filter((c) => c.wall_triggered_at && !c.wall_responded_at)
   const card = DOMAIN_CARDS[domain]
   const meta = DOMAIN_META[domain]
+
+  const generateProfile = async () => {
+    setGenerating(true); setProfileError(null)
+    try {
+      const res = await fetch('/api/admin/generate-identity-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ participant_id: String(participant.id), signal_tone: signalTone }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setProfileError(data.error ?? 'Generation failed'); return }
+      setIdentityProfile(data.profile)
+    } catch {
+      setProfileError('Network error — try again')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const approveProfile = async () => {
+    if (!identityProfile) return
+    setApproving(true); setProfileError(null)
+    try {
+      const res = await fetch('/api/admin/approve-identity-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          participant_id: String(participant.id),
+          anchor_statement: anchorStatement.trim() || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setProfileError(data.error ?? 'Approval failed'); return }
+      setProfileApproved(true)
+    } catch {
+      setProfileError('Network error — try again')
+    } finally {
+      setApproving(false)
+    }
+  }
 
   const save = async () => {
     setSaving(true)
@@ -364,6 +428,110 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Moment Text</label>
             <textarea value={momentText} onChange={(e) => setMomentText(e.target.value)} rows={2} placeholder="Verbatim quote or coach note describing the recognition moment…" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400 resize-none" />
           </div>
+        )}
+      </div>
+
+      {/* ── Identity Profile (Phase 4 — requires phase4-identity-profile.sql migration) ── */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">🪪 Identity Profile</p>
+          {profileApproved && (
+            <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">✅ Approved — visible to participant</span>
+          )}
+          {identityProfile && !profileApproved && (
+            <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Draft — pending approval</span>
+          )}
+        </div>
+
+        {/* Signal tone selector — drives AI generation */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
+            Signal Tone
+            <span className="ml-1 text-gray-400 font-normal normal-case tracking-normal" title="H1 = confirmation frame (they already know who they're becoming). H2 = recognition frame (they felt it but hadn't named it). Set based on your discovery call. REQUIRED before generating.">ⓘ</span>
+          </label>
+          <select
+            value={signalTone}
+            onChange={(e) => setSignalTone(e.target.value as 'H1' | 'H2' | 'none')}
+            disabled={profileApproved}
+            className="w-full border border-indigo-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-400"
+          >
+            <option value="none">None — neutral framing</option>
+            <option value="H1">H1 — &quot;That is exactly it&quot; (confirmation)</option>
+            <option value="H2">H2 — &quot;I had not thought of it that way&quot; (recognition)</option>
+          </select>
+          <p className="text-xs text-indigo-500 mt-1">Set from discovery call observation. Drives the AI framing.</p>
+        </div>
+
+        {/* Generated profile display */}
+        {identityProfile && (
+          <div className="bg-white rounded-xl border border-indigo-200 p-4 space-y-2">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">AI Generated Draft</p>
+            <p className="text-xl font-black text-indigo-900">{identityProfile.label}</p>
+            <div className="flex gap-2 flex-wrap">
+              {identityProfile.qualities.map((q) => (
+                <span key={q} className="text-xs font-semibold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">{q}</span>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400">Generated {new Date(identityProfile.generated_at).toLocaleString()} · Tone: {identityProfile.signal_tone}</p>
+          </div>
+        )}
+
+        {/* Coach-authored fields — Flux H174 LOCKED: these are NOT AI-generated */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
+            Day-in-the-life snapshot
+          </label>
+          <textarea
+            rows={3}
+            placeholder="Write this after your discovery call. First-person, specific to what they actually said."
+            className="w-full border border-indigo-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-500 resize-none disabled:bg-gray-50 disabled:text-gray-400"
+            disabled={profileApproved}
+          />
+          <p className="text-xs text-indigo-400 mt-1 italic">Write this after your discovery call. First-person, specific to what they actually said. Not AI-generated.</p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
+            Anchor statement
+          </label>
+          <textarea
+            value={anchorStatement}
+            onChange={(e) => setAnchorStatement(e.target.value)}
+            rows={2}
+            placeholder="Use their words from the call. Format: 'When [trigger], I [identity action].' e.g. 'When my alarm goes off, I am someone who gets up.'"
+            className="w-full border border-indigo-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-500 resize-none disabled:bg-gray-50 disabled:text-gray-400"
+            disabled={profileApproved}
+          />
+          <p className="text-xs text-indigo-400 mt-1 italic">Use their words from the call. &ldquo;When [trigger], I [identity action].&rdquo; This is what they heard from you — not AI-generated.</p>
+        </div>
+
+        {profileError && (
+          <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{profileError}</p>
+        )}
+
+        {/* Actions */}
+        {!profileApproved && (
+          <div className="flex gap-3">
+            <button
+              onClick={generateProfile}
+              disabled={generating || profileApproved}
+              className="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:bg-indigo-300 transition-colors"
+            >
+              {generating ? 'Generating…' : identityProfile ? '↺ Re-generate Draft' : '✨ Generate Draft'}
+            </button>
+            {identityProfile && (
+              <button
+                onClick={approveProfile}
+                disabled={approving}
+                className="flex-1 bg-green-600 text-white py-2 rounded-xl text-sm font-bold hover:bg-green-700 disabled:bg-green-300 transition-colors"
+              >
+                {approving ? 'Approving…' : '✅ Approve & Reveal'}
+              </button>
+            )}
+          </div>
+        )}
+        {profileApproved && (
+          <p className="text-xs text-green-600 text-center font-medium">Profile approved and visible to participant. Permanent — cannot be changed.</p>
         )}
       </div>
 

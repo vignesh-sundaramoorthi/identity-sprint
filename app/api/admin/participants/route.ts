@@ -17,6 +17,10 @@ export async function GET(_req: NextRequest) {
       enrolled_at,
       status,
       habit_recommendation,
+      identity_profile,
+      identity_profile_approved,
+      identity_profile_approved_at,
+      anchor_statement,
       applications (
         id,
         name,

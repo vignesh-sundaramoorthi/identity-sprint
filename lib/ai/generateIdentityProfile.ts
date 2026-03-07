@@ -15,7 +15,9 @@ export interface IdentityProfileInput {
   primary_craving: string | null
   secondary_craving: string | null
   primary_failure: string | null
-  pre_sprint_signal: 'H1' | 'H2' | 'none' | null
+  // pre_sprint_signal intentionally OMITTED — signal_tone is the validated, admin-set value.
+  // pre_sprint_signal (raw DB field) is NOT passed to AI to prevent stale/unvalidated data
+  // from influencing generation. Probe MEDIUM finding — resolved.
   signal_tone: SignalTone
   domain: string | null
 }

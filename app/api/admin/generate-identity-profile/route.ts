@@ -58,7 +58,6 @@ export async function POST(req: Request) {
         primary_craving,
         secondary_craving,
         primary_failure,
-        pre_sprint_signal,
         outcome_type
       )
     `)
@@ -115,7 +114,9 @@ export async function POST(req: Request) {
       primary_craving: app.primary_craving,
       secondary_craving: app.secondary_craving,
       primary_failure: app.primary_failure,
-      pre_sprint_signal: app.pre_sprint_signal as 'H1' | 'H2' | 'none' | null,
+      // pre_sprint_signal intentionally NOT passed — signal_tone is the admin-validated value.
+      // Passing raw pre_sprint_signal risked stale DB data silently influencing generation.
+      // MEDIUM finding (Probe H174) — resolved by dropping the unused field.
       signal_tone: signal_tone as SignalTone,
       domain,
     })
