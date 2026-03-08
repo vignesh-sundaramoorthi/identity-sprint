@@ -1,4 +1,4 @@
-// GET /api/tracker/[token] — fetch challenge + today's check-in
+// GET /api/tracker/[token] — fetch challenge + today's check-in + identity profile + becoming_statement
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getTodayDateStr } from '@/lib/tracker'
@@ -36,5 +36,58 @@ export async function GET(
     .eq('check_date', today)
     .single()
 
-  return NextResponse.json({ challenge, todayCheckin: todayCheckin ?? null })
+  // Fetch identity profile + becoming_statement via email join
+  // Join path: challenges.user_email → applications.email → sprint_participants
+  let identityProfile: {
+    label: string
+    qualities: string[]
+    signal_tone: string
+    generated_at: string
+  } | null = null
+  let identityProfileApproved = false
+  let anchorStatement: string | null = null
+  let snapshot: string | null = null
+  let becomingStatement: string | null = null
+
+  if (challenge.user_email) {
+    // Look up application by email
+    const { data: application } = await supabaseAdmin
+      .from('applications')
+      .select('id, identity_goal, identity_declaration')
+      .eq('email', challenge.user_email)
+      .maybeSingle()
+
+    if (application) {
+      // becoming_statement: prefer identity_declaration ("I am becoming..."), fall back to identity_goal
+      becomingStatement = application.identity_declaration ?? application.identity_goal ?? null
+
+      // Look up sprint_participant by application_id
+      const { data: participant } = await supabaseAdmin
+        .from('sprint_participants')
+        .select(
+          'identity_profile, identity_profile_approved, anchor_statement, snapshot'
+        )
+        .eq('application_id', application.id)
+        .maybeSingle()
+
+      if (participant) {
+        identityProfile = participant.identity_profile ?? null
+        identityProfileApproved = participant.identity_profile_approved ?? false
+        anchorStatement = participant.anchor_statement ?? null
+        snapshot = participant.snapshot ?? null
+      }
+    }
+  }
+
+  return NextResponse.json({
+    challenge,
+    todayCheckin: todayCheckin ?? null,
+    // Identity profile fields (Phase 4 PR1)
+    identityProfile,
+    identityProfileApproved,
+    anchorStatement,
+    snapshot,
+    // Streak share card (Phase 4 PR2)
+    becomingStatement,
+  })
 }

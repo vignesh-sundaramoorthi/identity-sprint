@@ -10,6 +10,7 @@ import {
   getMilestones,
   getDayNumber,
 } from '@/lib/tracker'
+import StreakShareCard from '@/components/tracker/StreakShareCard'
 
 interface AdaptiveSuggestion {
   slot: number
@@ -37,6 +38,10 @@ export default function TrackerPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Streak share card state (Phase 4 PR2)
+  const [becomingStatement, setBecomingStatement] = useState<string | null>(null)
+  const [identityName, setIdentityName] = useState<string | null>(null)
 
   // Local state for today's habit toggles
   const [habits, setHabits] = useState({ h1: false, h2: false, h3: false, h4: false, h5: false })
@@ -68,6 +73,15 @@ export default function TrackerPage() {
 
       setChallenge(trackerData.challenge)
       setAllCheckins(progressData?.checkins ?? [])
+
+      // Streak share card data (Phase 4 PR2)
+      setBecomingStatement(trackerData.becomingStatement ?? null)
+      // Identity name from approved profile label (if present)
+      if (trackerData.identityProfileApproved && trackerData.identityProfile?.label) {
+        setIdentityName(trackerData.identityProfile.label)
+      } else {
+        setIdentityName(null)
+      }
 
       if (trackerData.todayCheckin) {
         const c = trackerData.todayCheckin
@@ -406,7 +420,7 @@ export default function TrackerPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white py-4 rounded-2xl font-bold text-lg transition-colors shadow-lg shadow-purple-200"
+          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white py-4 rounded-2xl font-bold text-lg transition-colors shadow-lg shadow-purple-200 mb-4"
         >
           {saving ? (
             <span className="flex items-center justify-center gap-2">
@@ -415,6 +429,15 @@ export default function TrackerPage() {
             </span>
           ) : todayCheckin ? 'Update Check-in ✓' : 'Save Today\'s Check-in'}
         </button>
+
+        {/* Streak Share Card (Phase 4 PR2) */}
+        <StreakShareCard
+          dayNumber={dayNumber}
+          userName={challenge.user_name}
+          identityName={identityName}
+          becomingStatement={becomingStatement}
+          token={token}
+        />
       </div>
     </div>
   )
