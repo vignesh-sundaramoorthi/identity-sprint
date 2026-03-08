@@ -252,7 +252,7 @@ export default function Home() {
             <div>
               <p className="text-white font-bold text-xl mb-4">I'm Vignesh.</p>
               <p className="text-gray-300 text-lg leading-relaxed mb-4">
-                I have a background in data science and biotechnology — so when I say this approach is research-backed, I mean I've read the studies, not just the summaries.
+                I believe in a world where humans still thrive — not just survive. I'm on a mission to build human strength from the inside out, helping people transform and adapt in a world that's changing faster than most of us are ready for.
               </p>
               <p className="text-gray-300 text-lg leading-relaxed mb-4">
                 I'm also someone who's lived the gap between knowing what to do and actually becoming the person who does it. That's why I built Identity Sprint — not to sell you a system, but to work through a process with you.
@@ -261,16 +261,8 @@ export default function Home() {
                 I work with a small number of people at a time. Which means when you apply, I read your application personally. If we're a fit, you'll hear from me within 24 hours.
               </p>
               <p className="text-gray-300 text-lg font-medium">This is 1:1. Not a course. Not a platform. A real person who knows your name.</p>
-
-              {/* TODO: Vignesh — Fill in your personal story here. This is the most important section for trust.
-                  Suggested: 2-3 sentences on your data/biotech/fitness background and what led you to build this.
-                  What specific life experience made you understand this problem from the inside?
-                  "I built this because I went through it" converts far better than credentials.
-                  See Scout's note: frame around shared-struggle narrative, not qualifications. */}
               <div className="mt-6 pt-6 border-t border-gray-700">
-                <p className="text-gray-500 text-sm">Background in data science · Biotechnology · Sports &amp; fitness
-                  {/* TODO: Vignesh — Add specific roles/companies/credentials here */}
-                </p>
+                <p className="text-gray-500 text-sm">Background in data science · Biotechnology · Sports &amp; fitness</p>
               </div>
             </div>
           </div>
