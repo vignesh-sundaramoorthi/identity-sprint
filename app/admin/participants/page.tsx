@@ -507,6 +507,14 @@ function ParticipantCard({ participant, checkins, onUpdate, onWallRespond }: {
   )
 }
 
+interface Day1Alert {
+  participant_id: string
+  name: string
+  hours_until_day1: number
+  identity_goal: string | null
+  admin_url: string
+}
+
 export default function ParticipantsPage() {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [checkinsByApp, setCheckinsByApp] = useState<Record<number, Checkin[]>>({})
@@ -515,14 +523,22 @@ export default function ParticipantsPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [wallOnly, setWallOnly] = useState(false)
+  const [day1Alerts, setDay1Alerts] = useState<Day1Alert[]>([])
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/participants')
-    if (res.ok) {
-      const data = await res.json()
+    const [participantsRes, alertsRes] = await Promise.all([
+      fetch('/api/admin/participants'),
+      fetch('/api/admin/identity-profile-alerts'),
+    ])
+    if (participantsRes.ok) {
+      const data = await participantsRes.json()
       setParticipants(data.participants || [])
       setCheckinsByApp(data.checkinsByApp || {})
+    }
+    if (alertsRes.ok) {
+      const alertData = await alertsRes.json()
+      setDay1Alerts(alertData.alerts || [])
     }
     setLoading(false)
   }, [])
@@ -620,6 +636,53 @@ export default function ParticipantsPage() {
             ))}
           </div>
         </div>
+
+        {/* ── Day 1 Identity Profile Alert Banner (Phase 4 PR3) ──────────────────
+            Fires when a participant's sprint Day 1 is < 20hrs away and their
+            identity profile is not yet approved. Protects the Day 1 promise.
+            (Flux H187, Forge H188) */}
+        {day1Alerts.length > 0 && (
+          <div className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-xl mt-0.5">⚠️</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-amber-900">
+                  {day1Alerts.length === 1
+                    ? '1 participant starts Day 1 soon — Identity Profile not approved yet'
+                    : `${day1Alerts.length} participants start Day 1 soon — Identity Profiles not approved`}
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5 mb-3">
+                  The dashboard says &quot;Your coach is preparing your identity profile…&quot; — this is a promise. Approve before Day 1.
+                </p>
+                <div className="space-y-2">
+                  {day1Alerts.map((alert) => (
+                    <div key={alert.participant_id} className="flex items-center justify-between bg-white rounded-lg border border-amber-200 px-3 py-2">
+                      <div>
+                        <span className="text-sm font-semibold text-gray-900">{alert.name}</span>
+                        {alert.identity_goal && (
+                          <span className="ml-2 text-xs text-gray-500 truncate max-w-xs">&ldquo;{alert.identity_goal.slice(0, 60)}{alert.identity_goal.length > 60 ? '…' : ''}&rdquo;</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          alert.hours_until_day1 <= 4 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          Day 1 in ~{alert.hours_until_day1}h
+                        </span>
+                        <a
+                          href={alert.admin_url}
+                          className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline"
+                        >
+                          Generate profile →
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-16 text-gray-400">Loading participants&hellip;</div>
