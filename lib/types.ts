@@ -95,3 +95,11 @@ export interface LeaderboardEntry {
   currentStreak: number
   token: string  // for display identity
 }
+
+// Phase 4 — Identity Profile
+export interface IdentityProfile {
+  label: string           // e.g. "The Grounded Creator"
+  qualities: string[]     // 3 qualities
+  signal_tone: 'H1' | 'H2' | 'none'
+  generated_at: string    // ISO timestamp
+}
