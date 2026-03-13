@@ -6,6 +6,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
+    // Server-side validation — catch missing required fields before DB insert
+    const requiredFields = ['name', 'email', 'identity_goal', 'tried_before', 'why_now', 'commitment'] as const
+    for (const field of requiredFields) {
+      if (!body[field] || (typeof body[field] === 'string' && body[field].trim() === '')) {
+        return NextResponse.json(
+          { error: `Missing required field: ${field}` },
+          { status: 400 }
+        )
+      }
+    }
+
     const { data, error } = await supabase
       .from('applications')
       .insert([{
@@ -22,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Supabase insert error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to save application. Please try again.' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, id: data?.[0]?.id })

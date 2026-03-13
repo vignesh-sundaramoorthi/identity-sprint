@@ -59,6 +59,17 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid check-in data' }, { status: 400 })
   }
 
+  // Verify application exists before upsert — prevents raw FK violation 500
+  const { data: existingApp, error: lookupError } = await supabaseAdmin
+    .from('applications')
+    .select('id')
+    .eq('id', applicationId)
+    .single()
+
+  if (lookupError || !existingApp) {
+    return NextResponse.json({ error: 'Sprint not found' }, { status: 404 })
+  }
+
   // Upsert: one check-in per application per week
   const { data, error } = await supabase
     .from('checkins')
@@ -76,7 +87,7 @@ export async function POST(
 
   if (error) {
     console.error('Checkin upsert error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to save check-in. Please try again.' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true, checkin: data })
