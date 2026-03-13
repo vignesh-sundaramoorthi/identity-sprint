@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Challenge, DailyCheckin } from '@/lib/types'
+import { Challenge, DailyCheckin, IdentityProfile } from '@/lib/types'
 import {
   calcProgress,
   calcStreak,
@@ -11,6 +11,7 @@ import {
   getDayNumber,
 } from '@/lib/tracker'
 import StreakShareCard from '@/components/tracker/StreakShareCard'
+import IdentityProfileCard from '@/components/tracker/IdentityProfileCard'
 
 interface AdaptiveSuggestion {
   slot: number
@@ -38,6 +39,12 @@ export default function TrackerPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Identity profile state (Phase 4 PR1)
+  const [identityProfile, setIdentityProfile] = useState<IdentityProfile | null>(null)
+  const [identityProfileApproved, setIdentityProfileApproved] = useState(false)
+  const [anchorStatement, setAnchorStatement] = useState<string | null>(null)
+  const [snapshot, setSnapshot] = useState<string | null>(null)
 
   // Streak share card state (Phase 4 PR2)
   const [becomingStatement, setBecomingStatement] = useState<string | null>(null)
@@ -74,9 +81,14 @@ export default function TrackerPage() {
       setChallenge(trackerData.challenge)
       setAllCheckins(progressData?.checkins ?? [])
 
+      // Identity profile (Phase 4 PR1)
+      setIdentityProfile(trackerData.identityProfile ?? null)
+      setIdentityProfileApproved(trackerData.identityProfileApproved ?? false)
+      setAnchorStatement(trackerData.anchorStatement ?? null)
+      setSnapshot(trackerData.snapshot ?? null)
+
       // Streak share card data (Phase 4 PR2)
       setBecomingStatement(trackerData.becomingStatement ?? null)
-      // Identity name from approved profile label (if present)
       if (trackerData.identityProfileApproved && trackerData.identityProfile?.label) {
         setIdentityName(trackerData.identityProfile.label)
       } else {
@@ -325,6 +337,14 @@ export default function TrackerPage() {
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-4 mb-4 text-white">
           <p className="font-medium text-sm">{motivational}</p>
         </div>
+
+        {/* Identity Profile Card (Phase 4) */}
+        <IdentityProfileCard
+          identityProfile={identityProfile}
+          identityProfileApproved={identityProfileApproved}
+          anchorStatement={anchorStatement}
+          snapshot={snapshot}
+        />
 
         {/* Today's Habits */}
         <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">

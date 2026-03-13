@@ -99,6 +99,11 @@ interface Application {
   stage_signal?: string; pre_sprint_signal?: string
   week_3_badge?: string; dm_identity_verbatim?: string
   outreach_door?: string
+  outreach_deflection_type?: string
+  deflection_logged_at?: string | null
+  reply_length_signal?: string
+  outreach_exchange_count?: number | null
+  outreach_dm_variant?: string | null
   relational_anchor_type?: string
   post_sprint_first_checkin_status?: string
   post_sprint_language_signal?: string
@@ -108,9 +113,22 @@ interface Application {
   moment_text?: string
 }
 
+interface IdentityProfile {
+  label: string
+  qualities: string[]
+  signal_tone: 'H1' | 'H2' | 'none'
+  generated_at: string
+}
+
 interface Participant {
   id: number; application_id: number; cohort_id?: number
   enrolled_at: string; status: string; habit_recommendation?: string
+  // Phase 4 — Identity Profile fields (requires phase4-identity-profile.sql migration)
+  identity_profile?: IdentityProfile | null
+  identity_profile_approved?: boolean | null
+  identity_profile_approved_at?: string | null
+  anchor_statement?: string | null
+  snapshot?: string | null  // BUG-020 fix: coach-authored day-in-the-life snapshot
   applications: Application
 }
 
@@ -175,7 +193,7 @@ function WallBanner({ checkin, name, onRespond }: { checkin: Checkin; name: stri
 
 function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   participant: Participant; checkins: Checkin[]
-  onUpdate: (pid: number, aid: number, fields: Record<string, string>) => Promise<void>
+  onUpdate: (pid: number, aid: number, fields: Record<string, string | boolean | null>) => Promise<void>
   onWallRespond: (cid: number) => Promise<void>
 }) {
   const app = participant.applications
@@ -188,6 +206,10 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   const [stageSig, setStageSig] = useState(app.stage_signal ?? '')
   const [outcome, setOutcome] = useState(app.outcome_type ?? '')
   const [outreachDoor, setOutreachDoor] = useState(app.outreach_door ?? 'unknown')
+  const [deflectionType, setDeflectionType] = useState(app.outreach_deflection_type ?? 'no_reply')
+  const [replyLengthSignal, setReplyLengthSignal] = useState(app.reply_length_signal ?? '')
+  const [exchangeCount, setExchangeCount] = useState<string>(app.outreach_exchange_count != null ? String(app.outreach_exchange_count) : '')
+  const [dmVariant, setDmVariant] = useState(app.outreach_dm_variant ?? '')
   const [relanchorType, setRelanchorType] = useState(app.relational_anchor_type ?? '')
   const [postCheckinStatus, setPostCheckinStatus] = useState(app.post_sprint_first_checkin_status ?? '')
   const [postLangSignal, setPostLangSignal] = useState(app.post_sprint_language_signal ?? '')
@@ -195,12 +217,71 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   const [completionStatType, setCompletionStatType] = useState(app.sprint_completion_statement_type ?? '')
   const [momentFlag, setMomentFlag] = useState(app.moment_flag ?? false)
   const [momentText, setMomentText] = useState(app.moment_text ?? '')
+  // Phase 4 — Identity Profile state
+  const [signalTone, setSignalTone] = useState<'H1' | 'H2' | 'none'>(
+    (app.pre_sprint_signal as 'H1' | 'H2' | 'none') || 'none'
+  )
+  const [identityProfile, setIdentityProfile] = useState<IdentityProfile | null>(participant.identity_profile ?? null)
+  const [profileApproved, setProfileApproved] = useState(participant.identity_profile_approved ?? false)
+  const [anchorStatement, setAnchorStatement] = useState(participant.anchor_statement ?? '')
+  // BUG-020 fix (Forge H175): snapshot was uncontrolled — text silently lost on refresh.
+  // Snapshot is the highest-trust coaching artifact; it cannot be recovered post-call.
+  // Pattern mirrors anchorStatement: controlled state + persisted via approve body.
+  const [snapshot, setSnapshot] = useState(participant.snapshot ?? '')
+  const [showSnapshotGuide, setShowSnapshotGuide] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [approving, setApproving] = useState(false)
+  const [profileError, setProfileError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const ratings = checkins.map((c) => c.identity_rating)
   const walls = checkins.filter((c) => c.wall_triggered_at && !c.wall_responded_at)
   const card = DOMAIN_CARDS[domain]
   const meta = DOMAIN_META[domain]
+
+  const generateProfile = async () => {
+    setGenerating(true); setProfileError(null)
+    try {
+      const res = await fetch('/api/admin/generate-identity-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ participant_id: String(participant.id), signal_tone: signalTone }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setProfileError(data.error ?? 'Generation failed'); return }
+      setIdentityProfile(data.profile)
+    } catch {
+      setProfileError('Network error — try again')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const approveProfile = async () => {
+    if (!identityProfile) return
+    setApproving(true); setProfileError(null)
+    try {
+      const res = await fetch('/api/admin/approve-identity-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          participant_id: String(participant.id),
+          anchor_statement: anchorStatement.trim() || undefined,
+          // BUG-020 fix: include snapshot in approve body so it persists to DB
+          snapshot: snapshot.trim() || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setProfileError(data.error ?? 'Approval failed'); return }
+      setProfileApproved(true)
+    } catch {
+      setProfileError('Network error — try again')
+    } finally {
+      setApproving(false)
+    }
+  }
 
   const save = async () => {
     setSaving(true)
@@ -211,12 +292,16 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
       stage_signal: stageSig,
       outcome_type: outcome,
       outreach_door: outreachDoor,
+      outreach_deflection_type: deflectionType,
+      reply_length_signal: replyLengthSignal,
+      outreach_exchange_count: exchangeCount,
+      outreach_dm_variant: dmVariant,
       relational_anchor_type: relanchorType,
       post_sprint_first_checkin_status: postCheckinStatus,
       post_sprint_language_signal: postLangSignal,
       sprint_completion_statement: completionStatement,
       sprint_completion_statement_type: completionStatType,
-      moment_flag: String(momentFlag),
+      moment_flag: momentFlag,
       moment_text: momentText,
     })
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2500)
@@ -255,7 +340,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Pre-Sprint Signal</label>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Pre-Sprint Signal<span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="H1 = identity-level recognition ('That is exactly it'). H2 = suppressed awareness ('Had not thought of it'). Can set BEFORE sending the DM based on LinkedIn About section vocabulary (identity language → H1, habit/systems language → H2), OR set during/after the DM exchange. Either is valid.">ⓘ</span></label>
           <select value={preSig} onChange={(e) => setPreSig(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
             <option value="">Not set</option>
             <option value="H1">H1 — That is exactly it</option>
@@ -287,7 +372,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
           Outreach Door
-          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which outreach frame brought this participant in? Door A = identity change / exploration framing. Door B = mastery / depth framing. Platform refugees (BetterUp, Noom) → Door B by default.">ⓘ</span>
+          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which outreach frame brought this participant in? Door A = Rescue Frame (tried and failed, need a different approach). Door B = Optimization Frame (already disciplined, hitting a ceiling). Platform refugees (BetterUp, Noom) → Door B by default. Default: unknown.">ⓘ</span>
         </label>
         <select value={outreachDoor} onChange={(e) => setOutreachDoor(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
           <option value="unknown">Unknown</option>
@@ -296,6 +381,76 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
         </select>
         <p className="text-xs text-gray-400 mt-1">Set manually. Which outreach message did you send them?</p>
       </div>
+
+      {/* DM Variant — which A3 DM was sent (set BEFORE sending) */}
+      <div>
+        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+          DM Variant Sent
+          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which A3 DM variant did you send? Set this BEFORE sending the DM. A3-H1-A = Standard H1 (fresh interest, first-timer frame). A3-H1-B = Variant B (Day 190+, tried-multiple-things, accumulation-of-failure frame — use for prospects 6+ months post-Koe). A3-H2-A = Standard H2 (Suppressed Waiter, behavior vocab in About). warm-contact = existing network contact, no A3 protocol applied. Critical for post-cohort debrief: prevents variant archaeology.">ⓘ</span>
+        </label>
+        <select value={dmVariant} onChange={(e) => setDmVariant(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+          <option value="">Not set</option>
+          <option value="A3-H1-A">A3-H1-A — Standard H1 (fresh interest / first-timer)</option>
+          <option value="A3-H1-B">A3-H1-B — Variant B (Day 190+, accumulation-of-failure)</option>
+          <option value="A3-H2-A">A3-H2-A — Standard H2 (Suppressed Waiter)</option>
+          <option value="warm-contact">warm-contact — Existing network (no A3 protocol)</option>
+        </select>
+        <p className="text-xs text-gray-400 mt-1">Set <strong>before</strong> sending the DM. Enables post-cohort variant analysis.</p>
+      </div>
+
+      {/* Outreach Reply Signal — deflection type → conversion correlation */}
+      {outreachDoor !== 'unknown' && (
+        <div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+            Outreach Reply Signal
+            <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="What was the prospect&apos;s first reply? Each type predicts different conversion probability: koe_question (25-40% — highest intent, philosophy adopted, needs container) → what_is_it (20-35% — genuine curiosity, HIGH intent, explain well) → how_much (15-25% — buying signal, answer structure first, price second) → none/positive reply (45-60% — no friction) → maybe_later (8-15% — avoidance, Day 14-16 re-ping only, never same week) → no_reply (3-8% — silence, Day 7-10 follow-up, not rejection). Default: no_reply.">ⓘ</span>
+          </label>
+          <select value={deflectionType} onChange={(e) => setDeflectionType(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+            <option value="no_reply">No reply (silence)</option>
+            <option value="none">Positive reply — no friction</option>
+            <option value="koe_question">Koe question — highest intent</option>
+            <option value="what_is_it">What is it? — genuine curiosity</option>
+            <option value="how_much">How much? — price signal</option>
+            <option value="maybe_later">Maybe later — avoidance (Day 14-16 re-ping only)</option>
+          </select>
+          <p className="text-xs text-gray-400 mt-1">Set after first reply lands. koe_question = highest intent (25-40% conv.)</p>
+        </div>
+      )}
+
+      {/* Reply Length Signal — craving inference from DM reply length */}
+      {outreachDoor !== 'unknown' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+              Reply Length Signal
+              <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="How long was their first reply? Log this mid-DM-conversation. brief = MASTERY signal → short reply back, one direct question, match their register. moderate = RECOGNITION/CONNECTION mix → professional tone or warm opener. extended = CONNECTION signal → empathy-first, give them space, do not rush the link. Forward question (what does it involve / when does it start) at any length = buyer signal.">ⓘ</span>
+            </label>
+            <select value={replyLengthSignal} onChange={(e) => setReplyLengthSignal(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+              <option value="">Not set</option>
+              <option value="brief">brief (MASTERY signal)</option>
+              <option value="moderate">moderate (RECOGNITION/CONNECTION mix)</option>
+              <option value="extended">extended (CONNECTION signal)</option>
+            </select>
+            <p className="text-xs text-gray-400 mt-1">Set mid-conversation. Informs your next DM tone.</p>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+              Exchanges to Application
+              <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="How many DM exchanges happened before they applied? Log at application received. Null until then. Tests the extended-path hypothesis: did 3+ exchanges lead to higher sprint completion? Compare at Cohort 1 debrief.">ⓘ</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="20"
+              value={exchangeCount}
+              onChange={(e) => setExchangeCount(e.target.value)}
+              placeholder="e.g. 3"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400"
+            />
+            <p className="text-xs text-gray-400 mt-1">Log when they apply. Hypothesis: 3+ exchanges → higher completion.</p>
+          </div>
+        </div>
+      )}
 
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
@@ -364,6 +519,147 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Moment Text</label>
             <textarea value={momentText} onChange={(e) => setMomentText(e.target.value)} rows={2} placeholder="Verbatim quote or coach note describing the recognition moment…" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400 resize-none" />
           </div>
+        )}
+      </div>
+
+      {/* ── Identity Profile (Phase 4 — requires phase4-identity-profile.sql migration) ── */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">🪪 Identity Profile</p>
+          {profileApproved && (
+            <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">✅ Approved — visible to participant</span>
+          )}
+          {identityProfile && !profileApproved && (
+            <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Draft — pending approval</span>
+          )}
+        </div>
+
+        {/* Signal tone selector — drives AI generation */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
+            Signal Tone
+            <span className="ml-1 text-gray-400 font-normal normal-case tracking-normal" title="H1 = confirmation frame (they already know who they're becoming). H2 = recognition frame (they felt it but hadn't named it). Set based on your discovery call. REQUIRED before generating.">ⓘ</span>
+          </label>
+          <select
+            value={signalTone}
+            onChange={(e) => setSignalTone(e.target.value as 'H1' | 'H2' | 'none')}
+            disabled={profileApproved}
+            className="w-full border border-indigo-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-400"
+          >
+            <option value="none">None — neutral framing</option>
+            <option value="H1">H1 — &quot;That is exactly it&quot; (confirmation)</option>
+            <option value="H2">H2 — &quot;I had not thought of it that way&quot; (recognition)</option>
+          </select>
+          <p className="text-xs text-indigo-500 mt-1">Set from discovery call observation. Drives the AI framing.</p>
+        </div>
+
+        {/* Generated profile display */}
+        {identityProfile && (
+          <div className="bg-white rounded-xl border border-indigo-200 p-4 space-y-2">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">AI Generated Draft</p>
+            <p className="text-xl font-black text-indigo-900">{identityProfile.label}</p>
+            <div className="flex gap-2 flex-wrap">
+              {identityProfile.qualities.map((q) => (
+                <span key={q} className="text-xs font-semibold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">{q}</span>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400">Generated {new Date(identityProfile.generated_at).toLocaleString()} · Tone: {identityProfile.signal_tone}</p>
+          </div>
+        )}
+
+        {/* Coach-authored fields — Flux H174 LOCKED: these are NOT AI-generated */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide">
+              Day-in-the-life snapshot
+            </label>
+            {/* Craft H175 Option A: "How to write this" accordion — collapses by default */}
+            {!profileApproved && (
+              <button
+                type="button"
+                onClick={() => setShowSnapshotGuide(v => !v)}
+                className="text-xs text-indigo-500 hover:text-indigo-700 underline"
+              >
+                {showSnapshotGuide ? 'Hide guide' : 'How to write this'}
+              </button>
+            )}
+          </div>
+          {showSnapshotGuide && (
+            <div className="mb-2 bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-xs text-indigo-800 space-y-2">
+              <p className="font-semibold">Three parts every snapshot needs:</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li><span className="font-medium">Opening habit moment</span> — What does their morning / evening / specific time look like?</li>
+                <li><span className="font-medium">Decision frame</span> — What do they do when tempted that they don&apos;t do now?</li>
+                <li><span className="font-medium">Identity anchor line</span> — Their own words reframed in first person, stated as already true.</li>
+              </ol>
+              <p className="font-semibold mt-1">Template:</p>
+              <p className="font-mono bg-white rounded-lg p-2 border border-indigo-100 leading-relaxed">
+                I wake up [specific time/detail].<br/>
+                [Small daily practice they mentioned — present tense.]<br/><br/>
+                When [the specific trigger they named], I [what the new version of them does].<br/><br/>
+                [Closing identity line — their words, first person.]
+              </p>
+              <ul className="list-disc list-inside space-y-1 mt-1">
+                <li>Use <span className="font-medium">their words</span> wherever possible</li>
+                <li><span className="font-medium">2–3 sentences</span> is right — longer = description, not snapshot</li>
+                <li>Aim for specific and true, not beautiful</li>
+                <li><span className="font-medium">Write it same day</span> — the call is live in your memory now</li>
+              </ul>
+            </div>
+          )}
+          <textarea
+            value={snapshot}
+            onChange={(e) => setSnapshot(e.target.value)}
+            rows={3}
+            placeholder="Write this after your discovery call. First-person, specific to what they actually said."
+            className="w-full border border-indigo-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-500 resize-none disabled:bg-gray-50 disabled:text-gray-400"
+            disabled={profileApproved}
+          />
+          <p className="text-xs text-indigo-400 mt-1 italic">Write this after your discovery call. First-person, specific to what they actually said. Not AI-generated.</p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
+            Anchor statement
+          </label>
+          <textarea
+            value={anchorStatement}
+            onChange={(e) => setAnchorStatement(e.target.value)}
+            rows={2}
+            placeholder="Use their words from the call. Format: 'When [trigger], I [identity action].' e.g. 'When my alarm goes off, I am someone who gets up.'"
+            className="w-full border border-indigo-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-500 resize-none disabled:bg-gray-50 disabled:text-gray-400"
+            disabled={profileApproved}
+          />
+          <p className="text-xs text-indigo-400 mt-1 italic">Use their words from the call. &ldquo;When [trigger], I [identity action].&rdquo; This is what they heard from you — not AI-generated.</p>
+        </div>
+
+        {profileError && (
+          <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{profileError}</p>
+        )}
+
+        {/* Actions */}
+        {!profileApproved && (
+          <div className="flex gap-3">
+            <button
+              onClick={generateProfile}
+              disabled={generating || profileApproved}
+              className="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:bg-indigo-300 transition-colors"
+            >
+              {generating ? 'Generating…' : identityProfile ? '↺ Re-generate Draft' : '✨ Generate Draft'}
+            </button>
+            {identityProfile && (
+              <button
+                onClick={approveProfile}
+                disabled={approving}
+                className="flex-1 bg-green-600 text-white py-2 rounded-xl text-sm font-bold hover:bg-green-700 disabled:bg-green-300 transition-colors"
+              >
+                {approving ? 'Approving…' : '✅ Approve & Reveal'}
+              </button>
+            )}
+          </div>
+        )}
+        {profileApproved && (
+          <p className="text-xs text-green-600 text-center font-medium">Profile approved and visible to participant. Permanent — cannot be changed.</p>
         )}
       </div>
 
@@ -454,7 +750,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
 
 function ParticipantCard({ participant, checkins, onUpdate, onWallRespond }: {
   participant: Participant; checkins: Checkin[]
-  onUpdate: (pid: number, aid: number, fields: Record<string, string>) => Promise<void>
+  onUpdate: (pid: number, aid: number, fields: Record<string, string | boolean | null>) => Promise<void>
   onWallRespond: (cid: number) => Promise<void>
 }) {
   const app = participant.applications
@@ -507,6 +803,14 @@ function ParticipantCard({ participant, checkins, onUpdate, onWallRespond }: {
   )
 }
 
+interface Day1Alert {
+  participant_id: string
+  name: string
+  hours_until_day1: number
+  identity_goal: string | null
+  admin_url: string
+}
+
 export default function ParticipantsPage() {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [checkinsByApp, setCheckinsByApp] = useState<Record<number, Checkin[]>>({})
@@ -515,21 +819,29 @@ export default function ParticipantsPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [wallOnly, setWallOnly] = useState(false)
+  const [day1Alerts, setDay1Alerts] = useState<Day1Alert[]>([])
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/participants')
-    if (res.ok) {
-      const data = await res.json()
+    const [participantsRes, alertsRes] = await Promise.all([
+      fetch('/api/admin/participants'),
+      fetch('/api/admin/identity-profile-alerts'),
+    ])
+    if (participantsRes.ok) {
+      const data = await participantsRes.json()
       setParticipants(data.participants || [])
       setCheckinsByApp(data.checkinsByApp || {})
+    }
+    if (alertsRes.ok) {
+      const alertData = await alertsRes.json()
+      setDay1Alerts(alertData.alerts || [])
     }
     setLoading(false)
   }, [])
 
   useEffect(() => { load() }, [load])
 
-  const handleUpdate = useCallback(async (pid: number, aid: number, fields: Record<string, string>) => {
+  const handleUpdate = useCallback(async (pid: number, aid: number, fields: Record<string, string | boolean | null>) => {
     await fetch('/api/admin/participants', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -620,6 +932,53 @@ export default function ParticipantsPage() {
             ))}
           </div>
         </div>
+
+        {/* ── Day 1 Identity Profile Alert Banner (Phase 4 PR3) ──────────────────
+            Fires when a participant's sprint Day 1 is < 20hrs away and their
+            identity profile is not yet approved. Protects the Day 1 promise.
+            (Flux H187, Forge H188) */}
+        {day1Alerts.length > 0 && (
+          <div className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-xl mt-0.5">⚠️</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-amber-900">
+                  {day1Alerts.length === 1
+                    ? '1 participant starts Day 1 soon — Identity Profile not approved yet'
+                    : `${day1Alerts.length} participants start Day 1 soon — Identity Profiles not approved`}
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5 mb-3">
+                  The dashboard says &quot;Your coach is preparing your identity profile…&quot; — this is a promise. Approve before Day 1.
+                </p>
+                <div className="space-y-2">
+                  {day1Alerts.map((alert) => (
+                    <div key={alert.participant_id} className="flex items-center justify-between bg-white rounded-lg border border-amber-200 px-3 py-2">
+                      <div>
+                        <span className="text-sm font-semibold text-gray-900">{alert.name}</span>
+                        {alert.identity_goal && (
+                          <span className="ml-2 text-xs text-gray-500 truncate max-w-xs">&ldquo;{alert.identity_goal.slice(0, 60)}{alert.identity_goal.length > 60 ? '…' : ''}&rdquo;</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          alert.hours_until_day1 <= 4 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          Day 1 in ~{alert.hours_until_day1}h
+                        </span>
+                        <a
+                          href={alert.admin_url}
+                          className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline"
+                        >
+                          Generate profile →
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-16 text-gray-400">Loading participants&hellip;</div>

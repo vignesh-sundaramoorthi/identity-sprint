@@ -49,6 +49,7 @@ type Discovery = {
   email: string; name: string
   q1_need?: string; q2_blocker?: string; q3_motivator?: string
   q4_energiser?: string; q5_success?: string; q6_failure?: string
+  becoming_statement?: string
   primary_craving?: string; secondary_craving?: string; primary_failure?: string
 }
 
@@ -193,6 +194,12 @@ export default async function Admin() {
                         <div className="bg-white rounded-xl p-4 border border-gray-100">
                           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Their own words on failure</p>
                           <p className="text-sm text-gray-700 italic">&ldquo;{disc.q6_failure}&rdquo;</p>
+                        </div>
+                      )}
+                      {disc.becoming_statement && (
+                        <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 mt-3">
+                          <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-1">Identity Claim (Q7): &ldquo;I&apos;m becoming someone who...&rdquo;</p>
+                          <p className="text-sm text-indigo-900 italic">&ldquo;...{disc.becoming_statement}&rdquo;</p>
                         </div>
                       )}
                     </div>

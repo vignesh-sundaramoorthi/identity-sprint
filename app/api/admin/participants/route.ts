@@ -5,7 +5,7 @@ import { requireAdminAuth } from '@/lib/adminAuth'
 // GET /api/admin/participants
 // Returns all sprint_participants joined with applications and checkins
 export async function GET(_req: NextRequest) {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
 
   const { data: participants, error } = await supabaseAdmin
@@ -17,6 +17,11 @@ export async function GET(_req: NextRequest) {
       enrolled_at,
       status,
       habit_recommendation,
+      identity_profile,
+      identity_profile_approved,
+      identity_profile_approved_at,
+      anchor_statement,
+      snapshot,
       applications (
         id,
         name,
@@ -33,7 +38,20 @@ export async function GET(_req: NextRequest) {
         stage_signal,
         pre_sprint_signal,
         week_3_badge,
-        dm_identity_verbatim
+        dm_identity_verbatim,
+        outreach_door,
+        outreach_deflection_type,
+        deflection_logged_at,
+        reply_length_signal,
+        outreach_exchange_count,
+        outreach_dm_variant,
+        relational_anchor_type,
+        post_sprint_first_checkin_status,
+        post_sprint_language_signal,
+        sprint_completion_statement,
+        sprint_completion_statement_type,
+        moment_flag,
+        moment_text
       )
     `)
     .order('enrolled_at', { ascending: false })
@@ -85,7 +103,7 @@ interface CheckinRow {
 // PATCH /api/admin/participants
 // Update habit_recommendation, dm_identity_verbatim, pre_sprint_signal, stage_signal, or outcome_type
 export async function PATCH(req: NextRequest) {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
 
   const body = await req.json()
@@ -101,6 +119,23 @@ export async function PATCH(req: NextRequest) {
   if ('pre_sprint_signal' in fields) applicationFields.pre_sprint_signal = fields.pre_sprint_signal
   if ('stage_signal' in fields) applicationFields.stage_signal = fields.stage_signal
   if ('outcome_type' in fields) applicationFields.outcome_type = fields.outcome_type
+  if ('outreach_door' in fields) applicationFields.outreach_door = fields.outreach_door
+  if ('outreach_deflection_type' in fields) {
+    applicationFields.outreach_deflection_type = fields.outreach_deflection_type
+    // Auto-populate deflection_logged_at whenever deflection_type is set
+    applicationFields.deflection_logged_at = new Date().toISOString()
+  }
+  if ('reply_length_signal' in fields) applicationFields.reply_length_signal = fields.reply_length_signal || null
+  if ('outreach_exchange_count' in fields) applicationFields.outreach_exchange_count = fields.outreach_exchange_count === '' || fields.outreach_exchange_count === null ? null : Number(fields.outreach_exchange_count)
+  if ('outreach_dm_variant' in fields) applicationFields.outreach_dm_variant = fields.outreach_dm_variant || null
+  // BUG-017: coerce empty string → null for CHECK-constrained fields (Postgres rejects "" but accepts NULL)
+  if ('relational_anchor_type' in fields) applicationFields.relational_anchor_type = fields.relational_anchor_type || null
+  if ('post_sprint_first_checkin_status' in fields) applicationFields.post_sprint_first_checkin_status = fields.post_sprint_first_checkin_status || null
+  if ('post_sprint_language_signal' in fields) applicationFields.post_sprint_language_signal = fields.post_sprint_language_signal || null
+  if ('sprint_completion_statement' in fields) applicationFields.sprint_completion_statement = fields.sprint_completion_statement
+  if ('sprint_completion_statement_type' in fields) applicationFields.sprint_completion_statement_type = fields.sprint_completion_statement_type || null
+  if ('moment_flag' in fields) applicationFields.moment_flag = fields.moment_flag
+  if ('moment_text' in fields) applicationFields.moment_text = fields.moment_text
 
   const errors: string[] = []
 

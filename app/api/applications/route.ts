@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
 
   try {
