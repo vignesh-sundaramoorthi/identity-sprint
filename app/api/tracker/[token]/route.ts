@@ -1,4 +1,4 @@
-// GET /api/tracker/[token] — fetch challenge + today's check-in + identity profile
+// GET /api/tracker/[token] — fetch challenge + today's check-in + identity profile + becoming_statement
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getTodayDateStr } from '@/lib/tracker'
@@ -82,12 +82,12 @@ export async function GET(
   return NextResponse.json({
     challenge,
     todayCheckin: todayCheckin ?? null,
-    // Identity profile fields
+    // Identity profile fields (Phase 4 PR1)
     identityProfile,
     identityProfileApproved,
     anchorStatement,
     snapshot,
-    // For streak share card (PR2)
+    // Streak share card (Phase 4 PR2)
     becomingStatement,
   })
 }

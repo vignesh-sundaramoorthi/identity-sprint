@@ -10,6 +10,7 @@ import {
   getMilestones,
   getDayNumber,
 } from '@/lib/tracker'
+import StreakShareCard from '@/components/tracker/StreakShareCard'
 import IdentityProfileCard from '@/components/tracker/IdentityProfileCard'
 
 interface AdaptiveSuggestion {
@@ -39,11 +40,15 @@ export default function TrackerPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Identity profile state (Phase 4)
+  // Identity profile state (Phase 4 PR1)
   const [identityProfile, setIdentityProfile] = useState<IdentityProfile | null>(null)
   const [identityProfileApproved, setIdentityProfileApproved] = useState(false)
   const [anchorStatement, setAnchorStatement] = useState<string | null>(null)
   const [snapshot, setSnapshot] = useState<string | null>(null)
+
+  // Streak share card state (Phase 4 PR2)
+  const [becomingStatement, setBecomingStatement] = useState<string | null>(null)
+  const [identityName, setIdentityName] = useState<string | null>(null)
 
   // Local state for today's habit toggles
   const [habits, setHabits] = useState({ h1: false, h2: false, h3: false, h4: false, h5: false })
@@ -76,11 +81,19 @@ export default function TrackerPage() {
       setChallenge(trackerData.challenge)
       setAllCheckins(progressData?.checkins ?? [])
 
-      // Identity profile (Phase 4)
+      // Identity profile (Phase 4 PR1)
       setIdentityProfile(trackerData.identityProfile ?? null)
       setIdentityProfileApproved(trackerData.identityProfileApproved ?? false)
       setAnchorStatement(trackerData.anchorStatement ?? null)
       setSnapshot(trackerData.snapshot ?? null)
+
+      // Streak share card data (Phase 4 PR2)
+      setBecomingStatement(trackerData.becomingStatement ?? null)
+      if (trackerData.identityProfileApproved && trackerData.identityProfile?.label) {
+        setIdentityName(trackerData.identityProfile.label)
+      } else {
+        setIdentityName(null)
+      }
 
       if (trackerData.todayCheckin) {
         const c = trackerData.todayCheckin
@@ -427,7 +440,7 @@ export default function TrackerPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white py-4 rounded-2xl font-bold text-lg transition-colors shadow-lg shadow-purple-200"
+          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white py-4 rounded-2xl font-bold text-lg transition-colors shadow-lg shadow-purple-200 mb-4"
         >
           {saving ? (
             <span className="flex items-center justify-center gap-2">
@@ -436,6 +449,15 @@ export default function TrackerPage() {
             </span>
           ) : todayCheckin ? 'Update Check-in ✓' : 'Save Today\'s Check-in'}
         </button>
+
+        {/* Streak Share Card (Phase 4 PR2) */}
+        <StreakShareCard
+          dayNumber={dayNumber}
+          userName={challenge.user_name}
+          identityName={identityName}
+          becomingStatement={becomingStatement}
+          token={token}
+        />
       </div>
     </div>
   )
