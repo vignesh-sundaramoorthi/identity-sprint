@@ -99,6 +99,11 @@ interface Application {
   stage_signal?: string; pre_sprint_signal?: string
   week_3_badge?: string; dm_identity_verbatim?: string
   outreach_door?: string
+  outreach_deflection_type?: string
+  deflection_logged_at?: string | null
+  reply_length_signal?: string
+  outreach_exchange_count?: number | null
+  outreach_dm_variant?: string | null
   relational_anchor_type?: string
   post_sprint_first_checkin_status?: string
   post_sprint_language_signal?: string
@@ -175,7 +180,7 @@ function WallBanner({ checkin, name, onRespond }: { checkin: Checkin; name: stri
 
 function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   participant: Participant; checkins: Checkin[]
-  onUpdate: (pid: number, aid: number, fields: Record<string, string>) => Promise<void>
+  onUpdate: (pid: number, aid: number, fields: Record<string, string | boolean | null>) => Promise<void>
   onWallRespond: (cid: number) => Promise<void>
 }) {
   const app = participant.applications
@@ -188,6 +193,10 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
   const [stageSig, setStageSig] = useState(app.stage_signal ?? '')
   const [outcome, setOutcome] = useState(app.outcome_type ?? '')
   const [outreachDoor, setOutreachDoor] = useState(app.outreach_door ?? 'unknown')
+  const [deflectionType, setDeflectionType] = useState(app.outreach_deflection_type ?? 'no_reply')
+  const [replyLengthSignal, setReplyLengthSignal] = useState(app.reply_length_signal ?? '')
+  const [exchangeCount, setExchangeCount] = useState<string>(app.outreach_exchange_count != null ? String(app.outreach_exchange_count) : '')
+  const [dmVariant, setDmVariant] = useState(app.outreach_dm_variant ?? '')
   const [relanchorType, setRelanchorType] = useState(app.relational_anchor_type ?? '')
   const [postCheckinStatus, setPostCheckinStatus] = useState(app.post_sprint_first_checkin_status ?? '')
   const [postLangSignal, setPostLangSignal] = useState(app.post_sprint_language_signal ?? '')
@@ -211,12 +220,16 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
       stage_signal: stageSig,
       outcome_type: outcome,
       outreach_door: outreachDoor,
+      outreach_deflection_type: deflectionType,
+      reply_length_signal: replyLengthSignal,
+      outreach_exchange_count: exchangeCount,
+      outreach_dm_variant: dmVariant,
       relational_anchor_type: relanchorType,
       post_sprint_first_checkin_status: postCheckinStatus,
       post_sprint_language_signal: postLangSignal,
       sprint_completion_statement: completionStatement,
       sprint_completion_statement_type: completionStatType,
-      moment_flag: String(momentFlag),
+      moment_flag: momentFlag,
       moment_text: momentText,
     })
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2500)
@@ -255,7 +268,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Pre-Sprint Signal</label>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Pre-Sprint Signal<span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="H1 = identity-level recognition ('That is exactly it'). H2 = suppressed awareness ('Had not thought of it'). Can set BEFORE sending the DM based on LinkedIn About section vocabulary (identity language → H1, habit/systems language → H2), OR set during/after the DM exchange. Either is valid.">ⓘ</span></label>
           <select value={preSig} onChange={(e) => setPreSig(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
             <option value="">Not set</option>
             <option value="H1">H1 — That is exactly it</option>
@@ -287,7 +300,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
           Outreach Door
-          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which outreach frame brought this participant in? Door A = identity change / exploration framing. Door B = mastery / depth framing. Platform refugees (BetterUp, Noom) → Door B by default.">ⓘ</span>
+          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which outreach frame brought this participant in? Door A = Rescue Frame (tried and failed, need a different approach). Door B = Optimization Frame (already disciplined, hitting a ceiling). Platform refugees (BetterUp, Noom) → Door B by default. Default: unknown.">ⓘ</span>
         </label>
         <select value={outreachDoor} onChange={(e) => setOutreachDoor(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
           <option value="unknown">Unknown</option>
@@ -296,6 +309,76 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
         </select>
         <p className="text-xs text-gray-400 mt-1">Set manually. Which outreach message did you send them?</p>
       </div>
+
+      {/* DM Variant — which A3 DM was sent (set BEFORE sending) */}
+      <div>
+        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+          DM Variant Sent
+          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which A3 DM variant did you send? Set this BEFORE sending the DM. A3-H1-A = Standard H1 (fresh interest, first-timer frame). A3-H1-B = Variant B (Day 190+, tried-multiple-things, accumulation-of-failure frame — use for prospects 6+ months post-Koe). A3-H2-A = Standard H2 (Suppressed Waiter, behavior vocab in About). warm-contact = existing network contact, no A3 protocol applied. Critical for post-cohort debrief: prevents variant archaeology.">ⓘ</span>
+        </label>
+        <select value={dmVariant} onChange={(e) => setDmVariant(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+          <option value="">Not set</option>
+          <option value="A3-H1-A">A3-H1-A — Standard H1 (fresh interest / first-timer)</option>
+          <option value="A3-H1-B">A3-H1-B — Variant B (Day 190+, accumulation-of-failure)</option>
+          <option value="A3-H2-A">A3-H2-A — Standard H2 (Suppressed Waiter)</option>
+          <option value="warm-contact">warm-contact — Existing network (no A3 protocol)</option>
+        </select>
+        <p className="text-xs text-gray-400 mt-1">Set <strong>before</strong> sending the DM. Enables post-cohort variant analysis.</p>
+      </div>
+
+      {/* Outreach Reply Signal — deflection type → conversion correlation */}
+      {outreachDoor !== 'unknown' && (
+        <div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+            Outreach Reply Signal
+            <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="What was the prospect&apos;s first reply? Each type predicts different conversion probability: koe_question (25-40% — highest intent, philosophy adopted, needs container) → what_is_it (20-35% — genuine curiosity, HIGH intent, explain well) → how_much (15-25% — buying signal, answer structure first, price second) → none/positive reply (45-60% — no friction) → maybe_later (8-15% — avoidance, Day 14-16 re-ping only, never same week) → no_reply (3-8% — silence, Day 7-10 follow-up, not rejection). Default: no_reply.">ⓘ</span>
+          </label>
+          <select value={deflectionType} onChange={(e) => setDeflectionType(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+            <option value="no_reply">No reply (silence)</option>
+            <option value="none">Positive reply — no friction</option>
+            <option value="koe_question">Koe question — highest intent</option>
+            <option value="what_is_it">What is it? — genuine curiosity</option>
+            <option value="how_much">How much? — price signal</option>
+            <option value="maybe_later">Maybe later — avoidance (Day 14-16 re-ping only)</option>
+          </select>
+          <p className="text-xs text-gray-400 mt-1">Set after first reply lands. koe_question = highest intent (25-40% conv.)</p>
+        </div>
+      )}
+
+      {/* Reply Length Signal — craving inference from DM reply length */}
+      {outreachDoor !== 'unknown' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+              Reply Length Signal
+              <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="How long was their first reply? Log this mid-DM-conversation. brief = MASTERY signal → short reply back, one direct question, match their register. moderate = RECOGNITION/CONNECTION mix → professional tone or warm opener. extended = CONNECTION signal → empathy-first, give them space, do not rush the link. Forward question (what does it involve / when does it start) at any length = buyer signal.">ⓘ</span>
+            </label>
+            <select value={replyLengthSignal} onChange={(e) => setReplyLengthSignal(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
+              <option value="">Not set</option>
+              <option value="brief">brief (MASTERY signal)</option>
+              <option value="moderate">moderate (RECOGNITION/CONNECTION mix)</option>
+              <option value="extended">extended (CONNECTION signal)</option>
+            </select>
+            <p className="text-xs text-gray-400 mt-1">Set mid-conversation. Informs your next DM tone.</p>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+              Exchanges to Application
+              <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="How many DM exchanges happened before they applied? Log at application received. Null until then. Tests the extended-path hypothesis: did 3+ exchanges lead to higher sprint completion? Compare at Cohort 1 debrief.">ⓘ</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="20"
+              value={exchangeCount}
+              onChange={(e) => setExchangeCount(e.target.value)}
+              placeholder="e.g. 3"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400"
+            />
+            <p className="text-xs text-gray-400 mt-1">Log when they apply. Hypothesis: 3+ exchanges → higher completion.</p>
+          </div>
+        </div>
+      )}
 
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
@@ -454,7 +537,7 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
 
 function ParticipantCard({ participant, checkins, onUpdate, onWallRespond }: {
   participant: Participant; checkins: Checkin[]
-  onUpdate: (pid: number, aid: number, fields: Record<string, string>) => Promise<void>
+  onUpdate: (pid: number, aid: number, fields: Record<string, string | boolean | null>) => Promise<void>
   onWallRespond: (cid: number) => Promise<void>
 }) {
   const app = participant.applications
@@ -529,7 +612,7 @@ export default function ParticipantsPage() {
 
   useEffect(() => { load() }, [load])
 
-  const handleUpdate = useCallback(async (pid: number, aid: number, fields: Record<string, string>) => {
+  const handleUpdate = useCallback(async (pid: number, aid: number, fields: Record<string, string | boolean | null>) => {
     await fetch('/api/admin/participants', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
