@@ -6,7 +6,7 @@ import { requireAdminAuth } from '@/lib/adminAuth'
 // For methods not handled by this route, check auth first (return 401 if not
 // authenticated) then return 405. This prevents leaking endpoint existence
 // to unauthenticated callers via the 405 status code.
-function methodNotAllowed(): NextResponse {
+async function methodNotAllowed(): Promise<NextResponse> {
   const authError = await requireAdminAuth()
   if (authError) return authError
   return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
