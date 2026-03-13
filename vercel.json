@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/identity-profile-alerts",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
