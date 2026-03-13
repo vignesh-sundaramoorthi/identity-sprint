@@ -8,11 +8,11 @@ const ADMIN_COOKIE = 'is_admin_auth'
  * or null if auth passes. Use at the top of every /api/admin/* handler.
  *
  * Usage:
- *   const authError = requireAdminAuth()
+ *   const authError = await requireAdminAuth()
  *   if (authError) return authError
  */
-export function requireAdminAuth(): NextResponse | null {
-  const cookieStore = cookies()
+export async function requireAdminAuth(): Promise<NextResponse | null> {
+  const cookieStore = await cookies()
   const authCookie = cookieStore.get(ADMIN_COOKIE)
   if (!authCookie || authCookie.value !== 'true') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

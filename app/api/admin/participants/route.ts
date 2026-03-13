@@ -5,7 +5,7 @@ import { requireAdminAuth } from '@/lib/adminAuth'
 // GET /api/admin/participants
 // Returns all sprint_participants joined with applications and checkins
 export async function GET(_req: NextRequest) {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
 
   const { data: participants, error } = await supabaseAdmin
@@ -85,7 +85,7 @@ interface CheckinRow {
 // PATCH /api/admin/participants
 // Update habit_recommendation, dm_identity_verbatim, pre_sprint_signal, stage_signal, or outcome_type
 export async function PATCH(req: NextRequest) {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
 
   const body = await req.json()
