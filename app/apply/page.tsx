@@ -9,7 +9,7 @@ type AppForm = {
   identity_goal: string; tried_before: string; why_now: string; commitment: string
 }
 
-type QuizForm = { q1: string; q2: string; q3: string; q4: string; q5: string; q6: string }
+type QuizForm = { q1: string; q2: string; q3: string; q4: string; q5: string; q6: string; q7: string }
 
 const QUIZ_QUESTIONS = [
   {
@@ -17,7 +17,7 @@ const QUIZ_QUESTIONS = [
     options: ['To feel appreciated / respected', 'To feel more in control of my life', 'To learn useful skills & improve', 'To feel supported by people', 'To bring more excitement into life'],
   },
   {
-    key: 'q2', question: 'What usually blocks your progress the most?',
+    key: 'q2', question: "What's made this feel harder than it should?",
     options: ['Feeling bored or uninspired', 'Feeling not good enough yet', 'Feeling alone in the journey', 'Feeling undervalued / unnoticed', 'Life feels messy or out of control'],
   },
   {
@@ -33,7 +33,7 @@ const QUIZ_QUESTIONS = [
     options: ['Feeling stable and consistent', 'Feeling proud of a skill I built', 'Feeling supported throughout', 'Feeling excited and alive again', 'Feeling recognised for my growth', 'Actually following through — consistently doing what I say I will'],
   },
   {
-    key: 'q6', question: 'Why weren\'t previous attempts at change successful?',
+    key: 'q6', question: 'What has made change feel impossible in the past?',
     options: [
       'I relied on motivation — it worked until I stopped feeling like it',
       'I started too big and got overwhelmed',
@@ -66,7 +66,7 @@ export default function Apply() {
   const [form, setForm] = useState<AppForm>({
     name: '', email: '', whatsapp: '', identity_goal: '', tried_before: '', why_now: '', commitment: '',
   })
-  const [quiz, setQuiz] = useState<QuizForm>({ q1: '', q2: '', q3: '', q4: '', q5: '', q6: '' })
+  const [quiz, setQuiz] = useState<QuizForm>({ q1: '', q2: '', q3: '', q4: '', q5: '', q6: '', q7: '' })
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -95,6 +95,7 @@ export default function Apply() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: form.email, name: form.name, ...quiz,
+        becoming_statement: quiz.q7 || null,
         primary_craving: bp.cravingProfile.primary,
         secondary_craving: bp.cravingProfile.secondary,
         primary_failure: bp.failureProfile.primary,
@@ -287,7 +288,8 @@ export default function Apply() {
 
   // ─── QUIZ ────────────────────────────────────────────────────────────────────
   if (step === 'quiz') {
-    const allAnswered = Object.values(quiz).every(v => v !== '')
+    // q7 is optional — only q1-q6 required
+    const allAnswered = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6'].every(k => quiz[k as keyof QuizForm] !== '')
     return (
       <main className="min-h-screen bg-gray-50">
         <nav className="px-6 py-5 max-w-5xl mx-auto">
@@ -319,6 +321,24 @@ export default function Apply() {
                 </div>
               </div>
             ))}
+            {/* Q7 — Optional sentence completion: becoming_statement */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-gray-900">
+                  <span className="text-purple-600 font-bold">7.</span> I&apos;m becoming someone who...
+                </p>
+                <span className="text-xs text-gray-400 font-medium">Optional</span>
+              </div>
+              <textarea
+                value={quiz.q7}
+                onChange={(e) => setQuiz({ ...quiz, q7: e.target.value })}
+                rows={3}
+                placeholder='e.g. "shows up consistently, even when motivation isn&apos;t there"'
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition resize-none text-sm"
+              />
+              <p className="text-xs text-gray-400 mt-1.5">There&apos;s no right answer. Write whatever feels honest.</p>
+            </div>
+
             <div className="pt-2 space-y-3">
               <button type="submit" disabled={loading || !allAnswered}
                 className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition disabled:opacity-50 shadow-lg">

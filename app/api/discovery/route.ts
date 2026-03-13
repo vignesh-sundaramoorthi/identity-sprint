@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
         q4_energiser: body.q4,
         q5_success: body.q5,
         q6_failure: body.q6,
+        becoming_statement: body.becoming_statement || null,
         primary_craving: body.primary_craving,
         secondary_craving: body.secondary_craving,
         primary_failure: body.primary_failure,
