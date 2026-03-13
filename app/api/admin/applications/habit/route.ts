@@ -13,7 +13,7 @@ import { requireAdminAuth } from '@/lib/adminAuth'
 // }
 
 export async function PATCH(req: NextRequest) {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
 
   const body = await req.json()
@@ -70,17 +70,17 @@ export async function PATCH(req: NextRequest) {
 
 // Stub GET/POST/DELETE for auth-before-405 (BUG-012 pattern)
 export async function GET(_req: NextRequest) {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
   return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
 }
 export async function POST(_req: NextRequest) {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
   return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
 }
 export async function DELETE(_req: NextRequest) {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
   return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
 }

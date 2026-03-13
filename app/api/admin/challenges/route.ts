@@ -9,7 +9,7 @@ import { DailyCheckin } from '@/lib/types'
 import { requireAdminAuth } from '@/lib/adminAuth'
 
 export async function POST(req: NextRequest) {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
 
   const body = await req.json()
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const authError = requireAdminAuth()
+  const authError = await requireAdminAuth()
   if (authError) return authError
 
   // Fetch all challenges with habit info
