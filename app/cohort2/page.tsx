@@ -4,6 +4,27 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Cohort 2 — Identity Sprint',
   description: 'Not a subscription. Not a streak. A permanent shift in who you are.',
+  openGraph: {
+    title: 'Cohort 2 — Identity Sprint',
+    description: 'Not a subscription. Not a streak. A permanent shift in who you are.',
+    url: 'https://identity-sprint.vercel.app/cohort2',
+    siteName: 'Identity Sprint',
+    type: 'website',
+    images: [
+      {
+        url: 'https://identity-sprint.vercel.app/api/og/cohort2',
+        width: 1200,
+        height: 630,
+        alt: 'Cohort 2 — Identity Sprint — Who are you becoming?',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Cohort 2 — Identity Sprint',
+    description: 'Not a subscription. Not a streak. A permanent shift in who you are.',
+    images: ['https://identity-sprint.vercel.app/api/og/cohort2'],
+  },
 }
 
 export default function Cohort2Page() {
