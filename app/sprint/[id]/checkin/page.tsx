@@ -135,7 +135,7 @@ export default function CheckinPage() {
           </div>
 
           <p className="text-stone-400 text-sm text-center mb-2">Week {weekNumber - 1} check-in complete</p>
-          <h2 className="text-white text-2xl font-bold text-center mb-8">See you next week.</h2>
+          <h2 className="text-white text-2xl font-bold text-center mb-8">Week {weekNumber - 1} logged. You&apos;re still here.</h2>
 
           {/* Their identity goal */}
           <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 mb-6">

@@ -127,7 +127,7 @@ export default function IdentityCheckinPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Reflection saved.</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Week {data?.week_number} in the record.</h1>
           <p className="text-gray-500 text-sm mb-8">Week {data?.week_number}: &ldquo;{ratingLabel}&rdquo;</p>
           <button
             onClick={() => router.push(`/tracker/${token}`)}
