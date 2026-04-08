@@ -403,17 +403,18 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
         <div>
           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
             Outreach Reply Signal
-            <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="What was the prospect&apos;s first reply? Each type predicts different conversion probability: koe_question (25-40% — highest intent, philosophy adopted, needs container) → what_is_it (20-35% — genuine curiosity, HIGH intent, explain well) → how_much (15-25% — buying signal, answer structure first, price second) → none/positive reply (45-60% — no friction) → maybe_later (8-15% — avoidance, Day 14-16 re-ping only, never same week) → no_reply (3-8% — silence, Day 7-10 follow-up, not rejection). Default: no_reply.">ⓘ</span>
+            <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="What was the prospect&apos;s first reply? Each type predicts different conversion probability: koe_question (25-40% — highest intent, philosophy adopted, needs container) → ai_comparison (Archetype 3: used AI coaching / Disha, solved consistency, hitting identity ceiling — TBD conversion rate, log verbatim what AI couldn&apos;t do) → what_is_it (20-35% — genuine curiosity, HIGH intent, explain well) → how_much (15-25% — buying signal, answer structure first, price second) → none/positive reply (45-60% — no friction) → maybe_later (8-15% — avoidance, Day 14-16 re-ping only, never same week) → no_reply (3-8% — silence, Day 7-10 follow-up, not rejection). Default: no_reply.">ⓘ</span>
           </label>
           <select value={deflectionType} onChange={(e) => setDeflectionType(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
             <option value="no_reply">No reply (silence)</option>
             <option value="none">Positive reply — no friction</option>
             <option value="koe_question">Koe question — highest intent</option>
+            <option value="ai_comparison">AI comparison — Archetype 3 (Disha-crossover)</option>
             <option value="what_is_it">What is it? — genuine curiosity</option>
             <option value="how_much">How much? — price signal</option>
             <option value="maybe_later">Maybe later — avoidance (Day 14-16 re-ping only)</option>
           </select>
-          <p className="text-xs text-gray-400 mt-1">Set after first reply lands. koe_question = highest intent (25-40% conv.)</p>
+          <p className="text-xs text-gray-400 mt-1">Set after first reply lands. ai_comparison = Archetype 3 (AI coaching ceiling) — log verbatim what they said Disha couldn&apos;t do.</p>
         </div>
       )}
 
