@@ -386,14 +386,22 @@ function ParticipantDetail({ participant, checkins, onUpdate, onWallRespond }: {
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
           DM Variant Sent
-          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which A3 DM variant did you send? Set this BEFORE sending the DM. A3-H1-A = Standard H1 (fresh interest, first-timer frame). A3-H1-B = Variant B (Day 190+, tried-multiple-things, accumulation-of-failure frame — use for prospects 6+ months post-Koe). A3-H2-A = Standard H2 (Suppressed Waiter, behavior vocab in About). warm-contact = existing network contact, no A3 protocol applied. Critical for post-cohort debrief: prevents variant archaeology.">ⓘ</span>
+          <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal" title="Which DM variant did you send? Set BEFORE sending. Standard A3: H1-A = fresh interest/first-timer; H1-B = Day 190+, accumulation-of-failure; H2-A = Suppressed Waiter (behavior vocab in About). AI-comparison A3: H1-AI = identity vocab + Disha/AI-coach crossover (no bridge needed); H2-AI = behavior vocab + Disha/AI-coach crossover (needs identity bridge first). warm-contact = existing network, no A3 protocol. Critical for Cohort 2 debrief — prevents variant archaeology.">ⓘ</span>
         </label>
         <select value={dmVariant} onChange={(e) => setDmVariant(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-indigo-400">
           <option value="">Not set</option>
-          <option value="A3-H1-A">A3-H1-A — Standard H1 (fresh interest / first-timer)</option>
-          <option value="A3-H1-B">A3-H1-B — Variant B (Day 190+, accumulation-of-failure)</option>
-          <option value="A3-H2-A">A3-H2-A — Standard H2 (Suppressed Waiter)</option>
-          <option value="warm-contact">warm-contact — Existing network (no A3 protocol)</option>
+          <optgroup label="Standard A3">
+            <option value="A3-H1-A">A3-H1-A — Standard H1 (fresh interest / first-timer)</option>
+            <option value="A3-H1-B">A3-H1-B — Variant B (Day 190+, accumulation-of-failure)</option>
+            <option value="A3-H2-A">A3-H2-A — Standard H2 (Suppressed Waiter)</option>
+          </optgroup>
+          <optgroup label="AI-comparison A3 (Disha-crossover)">
+            <option value="A3-H1-AI">A3-H1-AI — H1 + AI comparison (identity vocab, fast arc)</option>
+            <option value="A3-H2-AI">A3-H2-AI — H2 + AI comparison (behavior vocab, needs bridge)</option>
+          </optgroup>
+          <optgroup label="Other">
+            <option value="warm-contact">warm-contact — Existing network (no A3 protocol)</option>
+          </optgroup>
         </select>
         <p className="text-xs text-gray-400 mt-1">Set <strong>before</strong> sending the DM. Enables post-cohort variant analysis.</p>
       </div>
